@@ -47,7 +47,7 @@ Software teams struggle with inconsistent code quality, undetected security vuln
 - [ ] Milestone 2 — Multi-Agent Orchestration & Analysis Pipeline (planned tooling: Bandit, Semgrep, Pylint, Flake8, Radon, Tree-sitter, SpotBugs, FindSecBugs, PMD, Checkstyle, JavaParser, SonarQube — see [Decision Log](docs/decision-log.md))
 - [ ] Milestone 3 — Findings Display & Severity Scoring
 - [ ] Milestone 4 — Conversational Code Assistant (RAG retriever + chat UI)
-- [ ] Milestone 5 — Code Review Report Generation & Export
+
 
 ---
 
