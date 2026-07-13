@@ -1,0 +1,16 @@
+﻿# Python
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Node
+node_modules/
+dist/
+
+# Generated data
+knowledge-base/chroma_store/*
+!knowledge-base/chroma_store/.gitkeep
+
+# IDE
+.vscode/

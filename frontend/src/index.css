@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/*
+  DARK MODE STRATEGY
+  -------------------
+  Tailwind v4 defaults to the `prefers-color-scheme` media query for dark
+  mode. We override this to a manually-toggled CLASS strategy instead,
+  because we want a user-controlled toggle button (not just OS preference).
+
+  This custom-variant line tells Tailwind: "treat `dark:` classes as active
+  whenever an ancestor has class='dark' (or its descendants do)."
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  DESIGN TOKENS
+  -------------
+  Defining brand colors as CSS variables (not hardcoded Tailwind color
+  names like `blue-500` everywhere) means:
+    1. Changing the brand color later = edit ONE place, not 40 files.
+    2. Light/dark mode can swap the SAME variable to different values.
+  This is the "single source of truth" principle applied to design.
+*/
+:root {
+  --color-brand: #4f46e5;       /* Indigo — primary brand accent */
+  --color-brand-hover: #4338ca;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+
+  --color-bg: #f8fafc;          /* Light mode background */
+  --color-surface: #ffffff;      /* Light mode card/panel background */
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+}
+
+.dark {
+  --color-bg: #0b0f1a;          /* Dark mode background */
+  --color-surface: #131826;      /* Dark mode card/panel background */
+  --color-border: #232b3d;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
