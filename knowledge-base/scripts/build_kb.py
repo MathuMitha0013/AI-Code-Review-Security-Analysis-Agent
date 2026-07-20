@@ -22,6 +22,9 @@ import logging
 import sys
 from pathlib import Path
 
+import chromadb
+from chromadb.config import Settings as ChromaSettings
+
 # Allow running this script directly (`python scripts/build_kb.py`)
 # by adding the knowledge-base root to the path, so `from scripts.x import y`
 # style absolute imports would also work if this pipeline is ever imported
@@ -69,11 +72,24 @@ def build_knowledge_base() -> None:
 
     # Stage 4: Store
     logger.info("Stage 4/4: Embedding chunks and persisting to ChromaDB at %s", CHROMA_PERSIST_DIR)
+
+    # We construct the ChromaDB client explicitly (rather than letting
+    # `Chroma.from_documents(persist_directory=...)` build one implicitly)
+    # specifically to guarantee `anonymized_telemetry=False` takes effect.
+    # Relying on the ANONYMIZED_TELEMETRY environment variable alone was
+    # unreliable here -- langchain-chroma's internal client construction
+    # didn't consistently pick it up, so we pass the setting directly into
+    # chromadb's own Settings object instead.
+    chroma_client = chromadb.PersistentClient(
+        path=str(CHROMA_PERSIST_DIR),
+        settings=ChromaSettings(anonymized_telemetry=False),
+    )
+
     Chroma.from_documents(
         documents=chunks,
         embedding=embedding_function,
         collection_name=COLLECTION_NAME,
-        persist_directory=str(CHROMA_PERSIST_DIR),
+        client=chroma_client,
     )
 
     logger.info("=== Knowledge Base Ready ===")
