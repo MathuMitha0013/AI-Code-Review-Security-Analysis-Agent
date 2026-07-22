@@ -2,8 +2,9 @@ import { useState } from 'react'
 import CodeEditor from './components/CodeEditor'
 import FileUpload from './components/FileUpload'
 import ResultPanel from './components/ResultPanel'
+import SecurityFindingsPanel from './components/SecurityFindingsPanel'
 import ThemeToggle from './components/ThemeToggle'
-import { submitCode } from './services/api'
+import { scanSecurity, submitCode } from './services/api'
 
 /**
  * App — top-level orchestrator.
@@ -16,6 +17,13 @@ import { submitCode } from './services/api'
  *   be no single place that knows "is there anything to submit right now?"
  *   Centralizing state here keeps child components "dumb" (presentation-only)
  *   and easy to test/reuse — they just receive props and call callbacks.
+ *
+ * SCOPE NOTE: The "Run Security Scan" flow below is pulled forward from
+ * Milestone 3 ("Findings Display and Severity Scoring Module") to make
+ * the Security Vulnerability Agent (Milestone 2) demonstrable end-to-end
+ * rather than only testable via Swagger docs. It is intentionally a
+ * SINGLE findings panel, not the full dashboard (filtering, sorting,
+ * export) Milestone 3 will eventually build.
  */
 export default function App() {
   const [mode, setMode] = useState('paste') // 'paste' | 'upload'
@@ -25,12 +33,18 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  const [securityReport, setSecurityReport] = useState(null)
+  const [isScanning, setIsScanning] = useState(false)
+  const [scanError, setScanError] = useState(null)
+
   const canSubmit = mode === 'paste' ? code.trim().length > 0 : file !== null
 
   async function handleSubmit() {
     setIsLoading(true)
     setError(null)
     setResult(null)
+    setSecurityReport(null)
+    setScanError(null)
     try {
       const response =
         mode === 'paste' ? await submitCode({ code }) : await submitCode({ file })
@@ -42,10 +56,27 @@ export default function App() {
     }
   }
 
+  async function handleSecurityScan() {
+    setIsScanning(true)
+    setScanError(null)
+    setSecurityReport(null)
+    try {
+      const response =
+        mode === 'paste' ? await scanSecurity({ code }) : await scanSecurity({ file })
+      setSecurityReport(response)
+    } catch (err) {
+      setScanError(err.message)
+    } finally {
+      setIsScanning(false)
+    }
+  }
+
   function switchMode(newMode) {
     setMode(newMode)
     setResult(null)
     setError(null)
+    setSecurityReport(null)
+    setScanError(null)
   }
 
   return (
@@ -102,9 +133,26 @@ export default function App() {
             >
               {isLoading ? 'Analyzing…' : 'Submit for Analysis'}
             </button>
+
+            {result?.is_valid && (
+              <button
+                onClick={handleSecurityScan}
+                disabled={isScanning}
+                className="mt-3 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]
+                           px-4 py-2.5 font-medium text-[var(--color-text-primary)] transition-colors
+                           hover:bg-[var(--color-border)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+              >
+                {isScanning ? 'Scanning…' : 'Run Security Scan'}
+              </button>
+            )}
           </div>
 
-          <ResultPanel result={result} isLoading={isLoading} error={error} />
+          <div className="space-y-6">
+            <ResultPanel result={result} isLoading={isLoading} error={error} />
+            {(securityReport || isScanning || scanError) && (
+              <SecurityFindingsPanel report={securityReport} isLoading={isScanning} error={scanError} />
+            )}
+          </div>
         </div>
       </main>
     </div>

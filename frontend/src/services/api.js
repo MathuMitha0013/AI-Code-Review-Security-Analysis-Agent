@@ -34,3 +34,31 @@ export async function submitCode({ code, file }) {
 
   return response.json()
 }
+
+/**
+ * Runs the Security Vulnerability Agent on code that has already passed
+ * syntax validation via submitCode(). Kept as a SEPARATE call (not bundled
+ * into submitCode) because the backend itself keeps these as two distinct
+ * agents/endpoints -- the frontend's API shape should mirror that
+ * separation rather than hide it.
+ *
+ * @param {{ code?: string, file?: File }} params - exactly one of code/file must be provided
+ * @returns {Promise<{language: string, findings: Array, summary: Object, overall_severity: string}>}
+ */
+export async function scanSecurity({ code, file }) {
+  const formData = new FormData()
+  if (code !== undefined) formData.append('code', code)
+  if (file !== undefined) formData.append('file', file)
+
+  const response = await fetch(`${API_BASE_URL}/api/security-scan`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `Request failed with status ${response.status}`)
+  }
+
+  return response.json()
+}

@@ -16,6 +16,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.analysis import router as analysis_router
+from app.api.orchestration import router as orchestration_router
+from app.api.security import router as security_router
 from app.api.submission import router as submission_router
 from app.core.config import settings
 from app.core.logging_config import configure_logging
@@ -64,6 +66,8 @@ app.add_middleware(
 
 app.include_router(submission_router)
 app.include_router(analysis_router)
+app.include_router(security_router)
+app.include_router(orchestration_router)
 
 
 @app.get("/health", tags=["health"])
