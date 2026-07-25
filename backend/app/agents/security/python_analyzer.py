@@ -15,6 +15,7 @@ material these rules are grounded in.
 import ast
 import re
 
+from app.agents.security.external_scanners import run_bandit, run_semgrep
 from app.agents.security.severity import RULE_SEVERITY
 from app.models.security_schema import SecurityScanReport, SecuritySummary, VulnerabilityFinding
 from app.agents.security.severity import compute_overall_severity
@@ -160,6 +161,15 @@ def analyze_python(code: str) -> SecurityScanReport:
                     "Use parameterized queries: 'cursor.execute(query, (param,))' instead.",
                     node,
                 )
+
+    # --- External tool integration: Bandit + Semgrep ---
+    # Our own AST rules above only catch the specific patterns we
+    # explicitly coded for. Bandit and Semgrep bring hundreds of
+    # additional, professionally-maintained security rules -- run
+    # alongside (not replacing) our custom rules to broaden coverage
+    # without discarding already-tested detection logic.
+    findings.extend(run_bandit(code))
+    findings.extend(run_semgrep(code, "python"))
 
     summary = SecuritySummary(
         total_findings=len(findings),

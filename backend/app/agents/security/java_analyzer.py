@@ -11,6 +11,7 @@ import re
 
 import javalang
 
+from app.agents.security.external_scanners import run_semgrep
 from app.agents.security.severity import RULE_SEVERITY, compute_overall_severity
 from app.models.security_schema import SecurityScanReport, SecuritySummary, VulnerabilityFinding
 
@@ -136,6 +137,12 @@ def analyze_java(code: str) -> SecurityScanReport:
                         f"repositories. Load secrets from environment variables or a secrets manager.",
                         node.position,
                     )
+
+    # --- External tool integration: Semgrep (Java) ---
+    # Same rationale as the Python analyzer -- broadens coverage beyond
+    # our hand-written AST rules using Semgrep's community-maintained
+    # Java security rule sets.
+    findings.extend(run_semgrep(code, "java"))
 
     summary = SecuritySummary(
         total_findings=len(findings),

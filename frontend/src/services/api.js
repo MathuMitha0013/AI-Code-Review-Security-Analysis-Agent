@@ -62,3 +62,33 @@ export async function scanSecurity({ code, file }) {
 
   return response.json()
 }
+
+/**
+ * Runs the full Orchestrated Review — Code Analysis + Security agents,
+ * dispatched concurrently on the backend, merged into one prioritized,
+ * deduplicated findings list. This is now the SINGLE entry point for
+ * code review in the UI (the Findings Display & Severity Scoring
+ * Module), replacing separate calls to submitCode()/scanSecurity() for
+ * the main review flow -- language detection and syntax validation
+ * happen internally on the backend before either agent runs.
+ *
+ * @param {{ code?: string, file?: File }} params - exactly one of code/file must be provided
+ * @returns {Promise<{language: string, findings: Array, summary: Object, overall_severity: string}>}
+ */
+export async function runReview({ code, file }) {
+  const formData = new FormData()
+  if (code !== undefined) formData.append('code', code)
+  if (file !== undefined) formData.append('file', file)
+
+  const response = await fetch(`${API_BASE_URL}/api/review`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `Request failed with status ${response.status}`)
+  }
+
+  return response.json()
+}

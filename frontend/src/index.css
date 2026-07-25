@@ -32,6 +32,16 @@
   --color-border: #e2e8f0;
   --color-text-primary: #0f172a;
   --color-text-secondary: #64748b;
+
+  /* Syntax highlighting palette, modeled on GitHub's familiar light theme
+     -- deliberately recognizable to developers rather than an arbitrary
+     custom palette, since consistency with tools people already use
+     reduces cognitive load in a code-review product. */
+  --syntax-keyword: #cf222e;
+  --syntax-string: #0a3069;
+  --syntax-comment: #6e7781;
+  --syntax-function: #8250df;
+  --syntax-number: #0550ae;
 }
 
 .dark {
@@ -40,6 +50,44 @@
   --color-border: #232b3d;
   --color-text-primary: #f1f5f9;
   --color-text-secondary: #94a3b8;
+
+  /* GitHub Dark-inspired syntax palette */
+  --syntax-keyword: #ff7b72;
+  --syntax-string: #a5d6ff;
+  --syntax-comment: #8b949e;
+  --syntax-function: #d2a8ff;
+  --syntax-number: #79c0ff;
+}
+
+/* Prism token classes -- react-simple-code-editor renders Prism's output
+   directly, so these classes style the highlighted code. Using our own
+   CSS variables (not an imported Prism theme file) is what makes syntax
+   colors correctly swap when dark mode toggles. */
+.token.keyword,
+.token.builtin {
+  color: var(--syntax-keyword);
+}
+.token.string,
+.token.char {
+  color: var(--syntax-string);
+}
+.token.comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+.token.function {
+  color: var(--syntax-function);
+}
+.token.number,
+.token.boolean {
+  color: var(--syntax-number);
+}
+.token.operator,
+.token.punctuation {
+  color: var(--color-text-secondary);
+}
+.token.class-name {
+  color: var(--syntax-function);
 }
 
 body {

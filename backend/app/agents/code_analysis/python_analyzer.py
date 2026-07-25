@@ -19,6 +19,7 @@ import logging
 from radon.complexity import cc_visit
 
 from app.agents.code_analysis import severity
+from app.agents.code_analysis.external_scanners import run_flake8, run_pylint
 from app.models.analysis_schema import Finding
 
 logger = logging.getLogger(__name__)
@@ -199,6 +200,15 @@ def analyze_python(code: str) -> list[Finding]:
 
     findings.extend(_analyze_complexity(code))
     findings.extend(_analyze_design_issues(tree))
+
+    # --- External tool integration: Pylint + Flake8 ---
+    # Our own AST rules above only catch the specific patterns we
+    # explicitly coded for. Pylint and Flake8 bring hundreds of
+    # additional, professionally-maintained checks -- run alongside
+    # (not replacing) our custom rules to broaden coverage without
+    # discarding already-tested detection logic.
+    findings.extend(run_pylint(code))
+    findings.extend(run_flake8(code))
 
     logger.info("Python analysis complete: %d findings", len(findings))
     return findings
