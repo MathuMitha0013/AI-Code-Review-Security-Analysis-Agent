@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/*
+  DARK MODE STRATEGY
+  -------------------
+  Tailwind v4 defaults to the `prefers-color-scheme` media query for dark
+  mode. We override this to a manually-toggled CLASS strategy instead,
+  because we want a user-controlled toggle button (not just OS preference).
+
+  This custom-variant line tells Tailwind: "treat `dark:` classes as active
+  whenever an ancestor has class='dark' (or its descendants do)."
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  DESIGN TOKENS
+  -------------
+  Defining brand colors as CSS variables (not hardcoded Tailwind color
+  names like `blue-500` everywhere) means:
+    1. Changing the brand color later = edit ONE place, not 40 files.
+    2. Light/dark mode can swap the SAME variable to different values.
+  This is the "single source of truth" principle applied to design.
+*/
+:root {
+  --color-brand: #4f46e5;       /* Indigo — primary brand accent */
+  --color-brand-hover: #4338ca;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+
+  --color-bg: #f8fafc;          /* Light mode background */
+  --color-surface: #ffffff;      /* Light mode card/panel background */
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+
+  /* Syntax highlighting palette, modeled on GitHub's familiar light theme
+     -- deliberately recognizable to developers rather than an arbitrary
+     custom palette, since consistency with tools people already use
+     reduces cognitive load in a code-review product. */
+  --syntax-keyword: #cf222e;
+  --syntax-string: #0a3069;
+  --syntax-comment: #6e7781;
+  --syntax-function: #8250df;
+  --syntax-number: #0550ae;
+}
+
+.dark {
+  --color-bg: #0b0f1a;          /* Dark mode background */
+  --color-surface: #131826;      /* Dark mode card/panel background */
+  --color-border: #232b3d;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+
+  /* GitHub Dark-inspired syntax palette */
+  --syntax-keyword: #ff7b72;
+  --syntax-string: #a5d6ff;
+  --syntax-comment: #8b949e;
+  --syntax-function: #d2a8ff;
+  --syntax-number: #79c0ff;
+}
+
+/* Prism token classes -- react-simple-code-editor renders Prism's output
+   directly, so these classes style the highlighted code. Using our own
+   CSS variables (not an imported Prism theme file) is what makes syntax
+   colors correctly swap when dark mode toggles. */
+.token.keyword,
+.token.builtin {
+  color: var(--syntax-keyword);
+}
+.token.string,
+.token.char {
+  color: var(--syntax-string);
+}
+.token.comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+.token.function {
+  color: var(--syntax-function);
+}
+.token.number,
+.token.boolean {
+  color: var(--syntax-number);
+}
+.token.operator,
+.token.punctuation {
+  color: var(--color-text-secondary);
+}
+.token.class-name {
+  color: var(--syntax-function);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/*
+  PRINT / PDF REPORT STYLING (Milestone 3)
+  ---------------------------------------
+  Styles applied dynamically when executing window.print() to generate a PDF.
+  Hides all interactive components (editors, sidebars, buttons, tools) and
+  re-formats the dashboard report into a clean, paginated layout.
+*/
+@media print {
+  /* Hide non-report layout elements */
+  .no-print,
+  button,
+  select,
+  .editor-section,
+  .chat-bubble,
+  .chat-sidebar,
+  .pr-summary-panel {
+    display: none !important;
+  }
+
+  /* Force background colors to print across browsers */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Expand margins and fill page widths */
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 12px !important;
+  }
+
+  main,
+  .print-w-full {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Prevent card items from awkwardly breaking across pages */
+  .finding-item-card,
+  .severity-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    margin-bottom: 0.75rem !important;
+  }
+}

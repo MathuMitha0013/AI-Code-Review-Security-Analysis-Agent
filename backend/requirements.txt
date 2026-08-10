@@ -1,0 +1,42 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.12.5
+pydantic-settings==2.7.1
+javalang==0.13.0
+pytest==8.3.4
+httpx==0.28.1
+radon==6.0.1
+openai==1.99.0
+langchain==0.3.14
+langchain-chroma==0.2.0
+langchain-huggingface==0.1.2
+chromadb==0.5.23
+posthog<3.0.0
+sentence-transformers==3.3.1
+transformers>=4.39.0,<4.47.0
+
+# =============================================================================
+# NOT INSTALLED HERE: bandit, pylint, flake8, semgrep
+# =============================================================================
+# These 4 external tools (used by the Security Vulnerability Agent and Code
+# Analysis Agent for broader detection coverage beyond our own hand-written
+# rules) are DELIBERATELY NOT listed above. Installing `semgrep` directly
+# into this venv was tested and confirmed to break FastAPI -- semgrep's
+# dependency chain silently overwrites `starlette` to an incompatible
+# version, causing `TypeError: Router.__init__() got an unexpected keyword
+# argument`. See docs/decision-log.md for the full incident.
+#
+# Install them isolated instead, via pipx (one-time, system-wide, works from
+# any project):
+#
+#   pip install --user pipx
+#   pipx ensurepath
+#   # close and reopen your terminal, then:
+#   pipx install bandit
+#   pipx install pylint
+#   pipx install flake8
+#   pipx install semgrep
+#
+# The backend calls these as subprocess commands, never imports them as
+# Python libraries -- they never need to share an environment with FastAPI.
