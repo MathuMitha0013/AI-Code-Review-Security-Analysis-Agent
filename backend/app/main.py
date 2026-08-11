@@ -19,6 +19,7 @@ from app.api.analysis import router as analysis_router
 from app.api.chat import router as chat_router
 from app.api.orchestration import router as orchestration_router
 from app.api.pr_summary import router as pr_summary_router
+from app.api.report import router as report_router
 from app.api.remediation import router as remediation_router
 from app.api.security import router as security_router
 from app.api.submission import router as submission_router
@@ -103,6 +104,7 @@ app.include_router(orchestration_router)
 app.include_router(remediation_router)
 app.include_router(chat_router)
 app.include_router(pr_summary_router)
+app.include_router(report_router)
 
 
 @app.get("/health", tags=["health"])

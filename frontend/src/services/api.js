@@ -208,3 +208,37 @@ export async function generatePRSummary(report) {
   return response.json()
 }
 
+/**
+ * Downloads an exportable PDF report for the code review scan (Milestone 4).
+ *
+ * @param {Object} report The complete UnifiedReviewReport object
+ * @returns {Promise<void>} Triggers browser file download
+ */
+export async function exportPdfReport(report) {
+  const response = await fetch(`${API_BASE_URL}/api/report/pdf`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(report),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(
+      errorBody.detail || `PDF export failed with status ${response.status}`
+    )
+  }
+
+  const blob = await response.blob()
+  const downloadUrl = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = downloadUrl
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+  link.download = `secoria_code_review_report_${timestamp}.pdf`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(downloadUrl)
+}
+

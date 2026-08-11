@@ -15,6 +15,7 @@ chromadb==0.5.23
 posthog<3.0.0
 sentence-transformers==3.3.1
 transformers>=4.39.0,<4.47.0
+reportlab==4.2.5
 
 # =============================================================================
 # NOT INSTALLED HERE: bandit, pylint, flake8, semgrep

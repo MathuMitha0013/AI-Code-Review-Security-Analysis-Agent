@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { generatePRSummary } from '../services/api'
+import { generatePRSummary, exportPdfReport } from '../services/api'
 import FindingItem from './FindingItem'
 
 function HealthScoreGauge({ score }) {
@@ -185,8 +185,18 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
     document.body.removeChild(link)
   }
 
-  const handleExportPDF = () => {
-    window.print()
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
+
+  const handleExportPDF = async () => {
+    setIsExportingPdf(true)
+    try {
+      await exportPdfReport(report)
+    } catch (err) {
+      console.error('PDF export failed:', err)
+      alert(err.message || 'Failed to export PDF report.')
+    } finally {
+      setIsExportingPdf(false)
+    }
   }
 
   const handleGeneratePRSummary = async () => {
@@ -299,10 +309,20 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
             </button>
             <button
               onClick={handleExportPDF}
-              className="rounded px-2.5 py-1.5 text-xs font-semibold border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-border)]/20 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1 cursor-pointer"
-              title="Print or Save Report as PDF"
+              disabled={isExportingPdf}
+              className="rounded px-2.5 py-1.5 text-xs font-semibold border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-border)]/20 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Download formatted PDF code review report"
             >
-              PDF
+              {isExportingPdf ? (
+                <>
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--color-text-secondary)] border-t-transparent"></div>
+                  <span>Exporting...</span>
+                </>
+              ) : (
+                <>
+                  <span>PDF Report</span>
+                </>
+              )}
             </button>
             <button
               onClick={handleGeneratePRSummary}
