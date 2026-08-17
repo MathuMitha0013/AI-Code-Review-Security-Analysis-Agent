@@ -242,3 +242,47 @@ export async function exportPdfReport(report) {
   window.URL.revokeObjectURL(downloadUrl)
 }
 
+/**
+ * Auto-remediates the entire codebase in one click, resolving all findings
+ * and producing clean source code with a changelog and projected score.
+ *
+ * @param {{
+ *   full_code: string,
+ *   language: string,
+ *   findings: Array,
+ *   health_score?: number
+ * }} params
+ * @returns {Promise<{
+ *   remediated_code: string,
+ *   changelog: Array<string>,
+ *   original_score: number,
+ *   projected_score: number,
+ *   fixed_count: number,
+ *   summary: string
+ * }>}
+ */
+export async function autoRemediateAll({ full_code, language, findings, health_score }) {
+  const response = await fetch(`${API_BASE_URL}/api/remediate-all`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      full_code,
+      language,
+      findings: findings || [],
+      health_score: health_score || 100,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(
+      errorBody.detail || `Auto-remediation failed with status ${response.status}`
+    )
+  }
+
+  return response.json()
+}
+
+

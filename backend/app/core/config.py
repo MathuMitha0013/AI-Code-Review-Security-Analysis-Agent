@@ -54,8 +54,13 @@ class Settings(BaseSettings):
     # billing/card linkage at all, and its API is OpenAI-compatible, so
     # we use the mature, stable `openai` Python package pointed at
     # Groq's servers rather than a Google-specific SDK.
+    # Multi-API Key pool support:
+    # Set either GROQ_API_KEYS="key1,key2,key3" OR GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_API_KEY_2: str = ""
+    GROQ_API_KEY_3: str = ""
+    GROQ_API_KEYS: str = ""
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
 
     # --- Vector DB (RAG Chatbot - Milestone 3) ---
     CHROMA_PERSIST_DIR: str = "../knowledge-base/chroma_store"

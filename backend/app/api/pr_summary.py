@@ -7,10 +7,10 @@ to generate a structured Pull Request review comment markdown block.
 
 import logging
 from fastapi import APIRouter, HTTPException
-
 from openai import OpenAI
 
 from app.core.config import settings
+from app.core.llm_manager import llm_manager
 from app.models.pr_summary_schema import PRSummaryResponse
 from app.orchestrator.schemas import UnifiedReviewReport
 
@@ -24,7 +24,7 @@ async def generate_pr_summary(report: UnifiedReviewReport) -> PRSummaryResponse:
     Compiles code review findings into a human-readable markdown summary
     suitable for copy-pasting directly as a Pull Request review comment.
     """
-    if not settings.GROQ_API_KEY:
+    if not settings.GROQ_API_KEY and not getattr(settings, "GROQ_API_KEYS", ""):
         raise HTTPException(
             status_code=503,
             detail="GROQ_API_KEY is not configured. Set it in backend/.env to use the PR Summary Agent.",
@@ -70,7 +70,7 @@ async def generate_pr_summary(report: UnifiedReviewReport) -> PRSummaryResponse:
         "before merging the PR.\n\n"
         "TONE & STYLE RULES:\n"
         "- Remain professional, constructive, and encouraging but technically precise.\n"
-        "- Never mention internal backend paths or Python library names (like Bandit/Semgrep) in the summary.\n"
+        "- Never mention internal backend paths or Python library names in the summary.\n"
         "- Rely strictly on the finding details provided; do not hallucinate findings that are not in the list.\n"
     )
 
@@ -92,8 +92,7 @@ async def generate_pr_summary(report: UnifiedReviewReport) -> PRSummaryResponse:
         f"{findings_text}\n"
     )
 
-    # 3. Call Groq Completion Endpoint
-    client = OpenAI(api_key=settings.GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+    client = OpenAI(api_key=settings.GROQ_API_KEY or "key", base_url="https://api.groq.com/openai/v1")
     try:
         response = client.chat.completions.create(
             model=settings.GROQ_MODEL,
@@ -101,11 +100,11 @@ async def generate_pr_summary(report: UnifiedReviewReport) -> PRSummaryResponse:
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": prompt_body},
             ],
-            temperature=0.2,  # Low temperature to enforce strict format compliance
+            temperature=0.2,
         )
         markdown_result = response.choices[0].message.content
     except Exception as exc:
-        logger.error("Groq API completion failed during PR summary generation: %s", exc)
+        logger.error("LLM call failed during PR summary generation: %s", exc)
         raise HTTPException(
             status_code=502,
             detail=f"Failed to communicate with LLM service: {exc}",

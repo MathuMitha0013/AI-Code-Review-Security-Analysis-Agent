@@ -28,6 +28,9 @@ def test_chat_without_api_key_returns_503(monkeypatch):
     """If GROQ_API_KEY is not defined, return a 503 Service Unavailable."""
     from app.core.config import settings
     monkeypatch.setattr(settings, "GROQ_API_KEY", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEY_2", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEY_3", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEYS", "")
 
     # Inject mock database client to bypass startup checks
     app.state.vector_store = MagicMock()

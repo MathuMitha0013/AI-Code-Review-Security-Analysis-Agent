@@ -45,6 +45,9 @@ def test_pr_summary_without_api_key_returns_503(monkeypatch):
     from app.core.config import settings
 
     monkeypatch.setattr(settings, "GROQ_API_KEY", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEY_2", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEY_3", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEYS", "")
 
     response = client.post("/api/pr-summary", json=_SAMPLE_REPORT)
     assert response.status_code == 503

@@ -4,40 +4,7 @@ import Prism from 'prismjs'
 import 'prismjs/components/prism-python'
 import 'prismjs/components/prism-java'
 
-// react-simple-code-editor is published as an older CommonJS module.
-// Vite's pre-bundling wraps it such that a plain default import can
-// resolve to EITHER the actual Editor component OR the whole raw exports
-// object (depending on the exact esbuild/Vite version's interop
-// behavior) -- verified by directly inspecting Vite's generated dep
-// shim, which returns `export default require_lib()` (the raw CJS
-// exports object as a whole). This defensive fallback handles both
-// shapes correctly: if CodeEditorModule is already the component,
-// `.default` is undefined and we fall back to CodeEditorModule itself;
-// if it's the wrapper object, `.default` correctly extracts the
-// component.
 const Editor = CodeEditorModule.default || CodeEditorModule
-
-/**
- * Code editor with line numbers, syntax highlighting, and a copy button.
- *
- * WHY react-simple-code-editor INSTEAD OF A PLAIN <textarea> NOW?
- *   Milestone 1 deliberately used a plain textarea to avoid an early,
- *   unjustified dependency (documented in the Decision Log). Real syntax
- *   highlighting genuinely improves usability for a code-review tool, so
- *   this is a deliberate upgrade, not scope creep -- and at ~2KB, this
- *   library stays proportionate rather than jumping straight to a full
- *   editor like Monaco (~5MB) that Milestone 1 explicitly avoided.
- *
- * WHY A MANUAL LANGUAGE TOGGLE FOR HIGHLIGHTING, SEPARATE FROM THE
- * BACKEND'S AUTO-DETECTION?
- *   The backend only detects language AFTER submission. While typing,
- *   nothing has told the client which grammar to highlight with yet.
- *   Rather than guess client-side (duplicating the backend's heuristic
- *   and risking it disagreeing with the real detection), a small manual
- *   toggle gives the user direct, honest control over highlighting with
- *   zero ambiguity -- the backend's own detection remains the single
- *   source of truth for what language was ACTUALLY submitted.
- */
 
 const LANGUAGES = {
   python: { label: 'Python', grammar: Prism.languages.python },
@@ -59,27 +26,38 @@ export default function CodeEditor({ value, onChange, disabled }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
-      {/* Toolbar: language toggle (for highlighting) + copy + line count */}
-      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-1.5">
-        <div className="flex gap-1">
-          {Object.entries(LANGUAGES).map(([key, { label }]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setHighlightLang(key)}
-              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer ${
-                highlightLang === key
-                  ? 'bg-[var(--color-brand)] text-white'
-                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+    <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg shadow-black/5 transition-all">
+      {/* Sleek IDE Header Toolbar */}
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)] px-4 py-2.5">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-[var(--color-text-secondary)]">
+          {/* Window Control Dots */}
+          <div className="flex items-center gap-1.5" aria-hidden="true">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80 ring-1 ring-rose-500/30" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80 ring-1 ring-amber-500/30" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80 ring-1 ring-emerald-500/30" />
+          </div>
+
+          {/* Language Mode Toggle */}
+          <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 ml-2">
+            {Object.entries(LANGUAGES).map(([key, { label }]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setHighlightLang(key)}
+                className={`rounded-md px-2.5 py-0.5 text-xs font-semibold transition-all cursor-pointer ${
+                  highlightLang === key
+                    ? 'bg-[var(--color-brand)] text-white shadow-sm'
+                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono font-medium text-[var(--color-text-muted)]">
             {lineCount} line{lineCount !== 1 ? 's' : ''}
           </span>
           <button
@@ -87,36 +65,50 @@ export default function CodeEditor({ value, onChange, disabled }) {
             onClick={handleCopy}
             disabled={!value}
             title="Copy code"
-            className="text-xs font-medium text-[var(--color-text-secondary)] transition-colors
-                       hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-secondary)] shadow-sm transition-all
+                       hover:border-indigo-500/40 hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           >
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? (
+              <>
+                <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-emerald-500 font-semibold">Copied</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Copy</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Editor with line-number gutter. Both the gutter and the code
-          scroll together because they're siblings inside ONE scrolling
-          container, not two independently-scrolled elements -- avoiding
-          the classic "line numbers drift out of sync" bug. */}
-      <div className="flex h-64 overflow-auto font-mono text-sm">
+      {/* Editor Body */}
+      <div className="flex min-h-[300px] max-h-[500px] overflow-auto font-mono text-sm">
+        {/* Line Numbers Column */}
         <div
           aria-hidden="true"
-          className="select-none px-3 py-4 text-right text-[var(--color-text-secondary)]/60"
-          style={{ lineHeight: '1.5rem' }}
+          className="select-none border-r border-[var(--color-border)] bg-[var(--color-bg-subtle)]/40 px-3 py-4 text-right font-mono text-xs text-[var(--color-text-muted)]"
+          style={{ lineHeight: '1.5rem', minWidth: '2.75rem' }}
         >
           {Array.from({ length: lineCount }, (_, i) => (
             <div key={i}>{i + 1}</div>
           ))}
         </div>
-        <div className="flex-1 py-4 pr-3">
+
+        {/* Code Input Area */}
+        <div className="flex-1 py-4 px-4">
           <Editor
             value={value}
             onValueChange={onChange}
             highlight={(code) => Prism.highlight(code, LANGUAGES[highlightLang].grammar, highlightLang)}
             disabled={disabled}
             padding={0}
-            placeholder="Paste your Python or Java code here..."
+            placeholder={`Paste your ${LANGUAGES[highlightLang].label} code here to review...`}
             style={{
               fontFamily: 'inherit',
               fontSize: 'inherit',
@@ -124,7 +116,7 @@ export default function CodeEditor({ value, onChange, disabled }) {
               color: 'var(--color-text-primary)',
               minHeight: '100%',
             }}
-            textareaClassName="focus:outline-none"
+            textareaClassName="focus:outline-none placeholder:text-[var(--color-text-muted)]"
           />
         </div>
       </div>

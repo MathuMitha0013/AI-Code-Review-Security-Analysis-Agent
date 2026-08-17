@@ -34,43 +34,40 @@ logger = logging.getLogger(__name__)
 async def lifespan(_app: FastAPI):
     """
     Manages startup/shutdown logic for the app's lifetime.
-
-    Pre-loads the sentence-transformers embedding model and ChromaDB client
-    into memory once on startup rather than re-instantiating on every request.
+    Starts up instantaneously so health checks and review routes are immediately available.
     """
     logger.info("%s v%s starting up.", settings.APP_NAME, settings.APP_VERSION)
-    
-    try:
-        from langchain_huggingface import HuggingFaceEmbeddings
-        from langchain_chroma import Chroma
-        import chromadb
-        from chromadb.config import Settings as ChromaSettings
+    _app.state.vector_store = None
 
-        # 1. Pre-load Embeddings Model
-        logger.info("Pre-loading sentence-transformers embedding model (all-MiniLM-L6-v2)...")
-        _app.state.embedding_function = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2",
-            model_kwargs={"device": "cpu"},
-            encode_kwargs={"normalize_embeddings": True},
-        )
-        logger.info("HuggingFace embedding model pre-loaded successfully.")
+    import asyncio
 
-        # 2. Pre-load ChromaDB Vector Store Client (Singleton connection)
-        logger.info("Initializing ChromaDB connection at %s...", settings.CHROMA_PERSIST_DIR)
-        chroma_client = chromadb.PersistentClient(
-            path=settings.CHROMA_PERSIST_DIR,
-            settings=ChromaSettings(anonymized_telemetry=False),
-        )
-        _app.state.vector_store = Chroma(
-            client=chroma_client,
-            collection_name=settings.CHROMA_COLLECTION_NAME,
-            embedding_function=_app.state.embedding_function,
-        )
-        logger.info("ChromaDB vector store connection cached on state successfully.")
-    except Exception as exc:
-        logger.critical("Failed to pre-load embedding model or database: %s", exc)
-        raise exc
+    async def _async_init_rag():
+        try:
+            from langchain_huggingface import HuggingFaceEmbeddings
+            from langchain_chroma import Chroma
+            import chromadb
+            from chromadb.config import Settings as ChromaSettings
 
+            logger.info("Initializing ChromaDB connection in background...")
+            embedding_function = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_kwargs={"device": "cpu"},
+                encode_kwargs={"normalize_embeddings": True},
+            )
+            chroma_client = chromadb.PersistentClient(
+                path=settings.CHROMA_PERSIST_DIR,
+                settings=ChromaSettings(anonymized_telemetry=False),
+            )
+            _app.state.vector_store = Chroma(
+                client=chroma_client,
+                collection_name=settings.CHROMA_COLLECTION_NAME,
+                embedding_function=embedding_function,
+            )
+            logger.info("ChromaDB vector store background initialization complete.")
+        except Exception as exc:
+            logger.warning("Background ChromaDB init notice: %s", exc)
+
+    asyncio.create_task(_async_init_rag())
     yield
     logger.info("%s shutting down.", settings.APP_NAME)
 

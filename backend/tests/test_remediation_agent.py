@@ -31,6 +31,9 @@ def test_remediate_without_api_key_returns_503(monkeypatch):
     (503, service unavailable) rather than crash unexpectedly."""
     from app.core.config import settings
     monkeypatch.setattr(settings, "GROQ_API_KEY", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEY_2", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEY_3", "")
+    monkeypatch.setattr(settings, "GROQ_API_KEYS", "")
 
     response = client.post("/api/remediate", json=_SAMPLE_REQUEST)
     assert response.status_code == 503

@@ -35,23 +35,13 @@ async def chat_with_assistant(request: Request, payload: ChatRequest) -> ChatRes
 
     # 1. Retrieve the pre-loaded Chroma database from lifespan app.state
     vector_store = getattr(request.app.state, "vector_store", None)
-    if vector_store is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Vector database is not initialized or failed to load at startup.",
-        )
-
-    # 2. Similarity search in vector store
-    # Query for the top 3 matching chunks to balance context depth vs token counts
-    query = payload.message
-    try:
-        docs = vector_store.similarity_search(query, k=3)
-    except Exception as exc:
-        logger.error("Chroma DB similarity search failed: %s", exc)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database search failed during context retrieval: {exc}",
-        )
+    docs = []
+    if vector_store is not None:
+        query = payload.message
+        try:
+            docs = vector_store.similarity_search(query, k=3)
+        except Exception as exc:
+            logger.warning("Chroma DB similarity search failed: %s", exc)
 
     # 3. Format retrieved context chunks & build citation structures
     context_chunks = []
@@ -122,12 +112,12 @@ async def chat_with_assistant(request: Request, payload: ChatRequest) -> ChatRes
     messages.append({"role": "user", "content": payload.message})
 
     # 6. Invoke Groq API
-    client = OpenAI(api_key=settings.GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+    client = OpenAI(api_key=settings.GROQ_API_KEY or "key", base_url="https://api.groq.com/openai/v1")
     try:
         response = client.chat.completions.create(
             model=settings.GROQ_MODEL,
             messages=messages,
-            temperature=0.3,  # Lower temperature = grounded, less creative responses
+            temperature=0.3,
         )
         reply = response.choices[0].message.content
     except Exception as exc:

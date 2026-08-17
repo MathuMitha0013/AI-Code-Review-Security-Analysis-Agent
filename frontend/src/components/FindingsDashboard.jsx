@@ -1,6 +1,8 @@
 import { useMemo, useState, useEffect } from 'react'
-import { generatePRSummary, exportPdfReport } from '../services/api'
+import { generatePRSummary, exportPdfReport, autoRemediateAll } from '../services/api'
 import FindingItem from './FindingItem'
+import VisualAnalytics from './VisualAnalytics'
+import CodeComparatorModal from './CodeComparatorModal'
 
 function HealthScoreGauge({ score }) {
   const [animatedScore, setAnimatedScore] = useState(100)
@@ -12,8 +14,8 @@ function HealthScoreGauge({ score }) {
     return () => clearTimeout(timer)
   }, [score])
 
-  const radius = 24
-  const strokeWidth = 4.5
+  const radius = 26
+  const strokeWidth = 5
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (animatedScore / 100) * circumference
 
@@ -25,7 +27,7 @@ function HealthScoreGauge({ score }) {
   if (score < 50) {
     strokeColor = 'stroke-rose-500'
     textColor = 'text-rose-500'
-    ratingText = 'Vulnerable'
+    ratingText = 'Critical'
     borderStyle = 'border-rose-500/20 bg-rose-500/5'
   } else if (score < 70) {
     strokeColor = 'stroke-orange-500'
@@ -40,24 +42,25 @@ function HealthScoreGauge({ score }) {
   }
 
   return (
-    <div className={`rounded-lg border p-3 flex items-center justify-between transition-all duration-300 ${borderStyle}`}>
+    <div className={`rounded-2xl border p-4 flex items-center justify-between transition-all duration-300 shadow-sm ${borderStyle}`}>
       <div className="space-y-0.5">
         <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Code Health</div>
-        <div className={`text-xs font-semibold ${textColor}`}>{ratingText}</div>
+        <div className={`text-sm font-bold ${textColor}`}>{ratingText}</div>
+        <div className="text-[11px] text-[var(--color-text-muted)]">Scale: 0 - 100</div>
       </div>
-      <div className="relative flex items-center justify-center h-12 w-12 shrink-0">
+      <div className="relative flex items-center justify-center h-14 w-14 shrink-0">
         <svg className="w-full h-full transform -rotate-90">
           <circle
-            cx="24"
-            cy="24"
+            cx="28"
+            cy="28"
             r={radius}
-            className="stroke-[var(--color-border)]"
+            className="stroke-[var(--color-border)] opacity-40"
             strokeWidth={strokeWidth}
             fill="transparent"
           />
           <circle
-            cx="24"
-            cy="24"
+            cx="28"
+            cy="28"
             r={radius}
             className={`transition-all duration-1000 ease-out ${strokeColor}`}
             strokeWidth={strokeWidth}
@@ -67,7 +70,7 @@ function HealthScoreGauge({ score }) {
             fill="transparent"
           />
         </svg>
-        <span className="absolute text-xs font-bold text-[var(--color-text-primary)] font-mono">
+        <span className="absolute text-sm font-extrabold text-[var(--color-text-primary)] font-mono">
           {score}
         </span>
       </div>
@@ -75,50 +78,36 @@ function HealthScoreGauge({ score }) {
   )
 }
 
-/**
- * Findings Display and Severity Scoring Module.
- *
- * Consumes the Orchestrator's UnifiedReviewReport (see
- * backend/app/orchestrator/schemas.py) and provides:
- *   1. Severity summary cards (also act as clickable filters)
- *   2. Source-agent filter (All / Code Quality / Security)
- *   3. Sort control (by severity or by line number)
- *   4. The findings list itself, filtered and sorted client-side
- *
- * WHY FILTER/SORT CLIENT-SIDE INSTEAD OF RE-CALLING THE BACKEND?
- *   The full findings list for one review is small (typically under a few
- *   dozen items) and already fully loaded in memory. Filtering/sorting
- *   client-side is instant and avoids unnecessary network round-trips for
- *   what is purely a "how do I want to VIEW data I already have" concern
- *   -- the backend's job (running agents) is already done by this point.
- */
-
 const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low']
 
 const SEVERITY_STYLES = {
   critical: {
-    badge: 'bg-[var(--color-danger)]/15 text-[var(--color-danger)] border-[var(--color-danger)]/30',
-    card: 'border-[var(--color-danger)]/30 bg-[var(--color-danger)]/5',
-    cardActive: 'border-[var(--color-danger)] bg-[var(--color-danger)]/15',
-    text: 'text-[var(--color-danger)]',
+    badge: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+    card: 'border-[var(--color-border)] bg-[var(--color-surface)]',
+    cardActive: 'border-rose-500/50 bg-rose-500/10 shadow-sm shadow-rose-500/10',
+    text: 'text-rose-500',
+    dot: 'bg-rose-500',
   },
   high: {
-    badge: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border-[var(--color-danger)]/20',
-    card: 'border-[var(--color-danger)]/20 bg-[var(--color-danger)]/5',
-    cardActive: 'border-[var(--color-danger)] bg-[var(--color-danger)]/10',
-    text: 'text-[var(--color-danger)]',
+    badge: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    card: 'border-[var(--color-border)] bg-[var(--color-surface)]',
+    cardActive: 'border-orange-500/50 bg-orange-500/10 shadow-sm shadow-orange-500/10',
+    text: 'text-orange-500',
+    dot: 'bg-orange-500',
   },
   medium: {
     badge: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    card: 'border-amber-500/20 bg-amber-500/5',
-    cardActive: 'border-amber-500 bg-amber-500/10',
+    card: 'border-[var(--color-border)] bg-[var(--color-surface)]',
+    cardActive: 'border-amber-500/50 bg-amber-500/10 shadow-sm shadow-amber-500/10',
     text: 'text-amber-500',
+    dot: 'bg-amber-500',
   },
   low: {
-    badge: 'bg-[var(--color-text-secondary)]/10 text-[var(--color-text-secondary)] border-[var(--color-border)]',
+    badge: 'bg-sky-500/10 text-sky-500 border-sky-500/20',
     card: 'border-[var(--color-border)] bg-[var(--color-surface)]',
-    cardActive: 'border-[var(--color-text-secondary)] bg-[var(--color-border)]',
-    text: 'text-[var(--color-text-secondary)]',
+    cardActive: 'border-sky-500/50 bg-sky-500/10 shadow-sm shadow-sky-500/10',
+    text: 'text-sky-500',
+    dot: 'bg-sky-500',
   },
 }
 
@@ -128,23 +117,57 @@ const AGENT_LABELS = {
 }
 
 function SeverityBadge({ severity }) {
+  const styles = SEVERITY_STYLES[severity] || SEVERITY_STYLES.low
   return (
-    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium uppercase ${SEVERITY_STYLES[severity].badge}`}>
-      {severity}
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-bold uppercase tracking-wider ${styles.badge}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
+      <span>{severity}</span>
     </span>
   )
 }
 
-export default function FindingsDashboard({ report, isLoading, error, fullCode, onAskAssistant }) {
+export default function FindingsDashboard({ report, isLoading, error, fullCode, onAskAssistant, onApplyCleanCode }) {
+  const [activeTab, setActiveTab] = useState('list') // 'list' | 'visual'
   const [activeSeverities, setActiveSeverities] = useState(new Set(SEVERITY_ORDER))
+  const [selectedCategory, setSelectedCategory] = useState(null)
   const [activeAgent, setActiveAgent] = useState('all')
   const [sortBy, setSortBy] = useState('severity')
+
+  // Auto-Remediation & Comparator state
+  const [isAutoRemediating, setIsAutoRemediating] = useState(false)
+  const [remediationData, setRemediationData] = useState(null)
+  const [isComparatorOpen, setIsComparatorOpen] = useState(false)
 
   // PR Summary and report export states (Milestone 3)
   const [prSummary, setPrSummary] = useState(null)
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [summaryError, setSummaryError] = useState(null)
   const [copiedSummary, setCopiedSummary] = useState(false)
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
+
+  const handleAutoRemediate = async () => {
+    if (!report?.findings || report.findings.length === 0) {
+      alert('No findings detected to remediate!')
+      return
+    }
+
+    setIsAutoRemediating(true)
+    try {
+      const res = await autoRemediateAll({
+        full_code: fullCode,
+        language: report.language,
+        findings: report.findings,
+        health_score: report.health_score || 100,
+      })
+      setRemediationData(res)
+      setIsComparatorOpen(true)
+    } catch (err) {
+      console.error('Auto-remediation failed:', err)
+      alert(err.message || 'Auto-remediation failed. Please check your GROQ_API_KEY.')
+    } finally {
+      setIsAutoRemediating(false)
+    }
+  }
 
   const handleExportCSV = () => {
     if (!report?.findings || report.findings.length === 0) {
@@ -184,8 +207,6 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
     link.click()
     document.body.removeChild(link)
   }
-
-  const [isExportingPdf, setIsExportingPdf] = useState(false)
 
   const handleExportPDF = async () => {
     setIsExportingPdf(true)
@@ -231,15 +252,17 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
     if (activeAgent !== 'all') {
       result = result.filter((f) => f.source_agent === activeAgent)
     }
+    if (selectedCategory) {
+      result = result.filter((f) => f.category === selectedCategory)
+    }
     result = [...result].sort((a, b) => {
       if (sortBy === 'severity') {
         return SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
       }
-      // sortBy === 'line'
       return (a.line ?? Infinity) - (b.line ?? Infinity)
     })
     return result
-  }, [report, activeSeverities, activeAgent, sortBy])
+  }, [report, activeSeverities, activeAgent, selectedCategory, sortBy])
 
   function toggleSeverity(severity) {
     setActiveSeverities((prev) => {
@@ -253,28 +276,51 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
     })
   }
 
+  function handleSelectSeveritySingle(severity) {
+    if (!severity) {
+      setActiveSeverities(new Set(SEVERITY_ORDER))
+    } else {
+      setActiveSeverities(new Set([severity]))
+    }
+  }
+
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-        <p className="text-[var(--color-text-secondary)]">Running Code Analysis + Security agents…</p>
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center shadow-lg">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500 mb-4 animate-bounce">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h4 className="text-base font-bold text-[var(--color-text-primary)]">Executing Multi-Agent Inspection Pipeline...</h4>
+        <p className="mt-1 text-xs text-[var(--color-text-secondary)]">Running Code Analysis + Security Agents in parallel</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/5 p-6">
-        <p className="font-medium text-[var(--color-danger)]">Review failed</p>
-        <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{error}</p>
+      <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-6 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-rose-500">Review Execution Failed</p>
+            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">{error}</p>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!report) {
     return (
-      <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-6 text-center">
-        <p className="text-[var(--color-text-secondary)]">
-          Run a full review to see code quality and security findings here, scored by severity.
+      <div className="flex min-h-[160px] items-center justify-center rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/50 p-8 text-center">
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          Run a full review to view prioritized code smells, complexity metrics, and OWASP security findings.
         </p>
       </div>
     )
@@ -283,43 +329,59 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
   const { summary, overall_severity: overallSeverity, language } = report
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-[var(--color-text-primary)]">Review Results</h3>
-          <span className="rounded-full bg-[var(--color-brand)]/10 px-2.5 py-0.5 text-xs font-medium capitalize text-[var(--color-brand)]">
-            {language}
-          </span>
+    <div className="space-y-5">
+      {/* Top Header Card with Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500 font-bold border border-indigo-500/20">
+            ✓
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-[var(--color-text-primary)]">Inspection Report</h3>
+              <span className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-semibold capitalize text-indigo-400 border border-indigo-500/20">
+                {language}
+              </span>
+            </div>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              Total {summary.total_findings} finding{summary.total_findings !== 1 ? 's' : ''} detected
+            </p>
+          </div>
         </div>
 
         {/* Actions & Badges */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <SeverityBadge severity={overallSeverity} />
 
-          <div className="hidden sm:block h-5 w-[1px] bg-[var(--color-border)] no-print"></div>
+          <div className="hidden sm:block h-6 w-[1px] bg-[var(--color-border)] no-print"></div>
 
           <div className="flex items-center gap-2 no-print">
             <button
               onClick={handleExportCSV}
-              className="rounded px-2.5 py-1.5 text-xs font-semibold border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-border)]/20 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm hover:text-[var(--color-text-primary)] hover:border-indigo-500/40 transition-all cursor-pointer"
               title="Download findings spreadsheet (CSV)"
             >
-              CSV
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>CSV</span>
             </button>
             <button
               onClick={handleExportPDF}
               disabled={isExportingPdf}
-              className="rounded px-2.5 py-1.5 text-xs font-semibold border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-border)]/20 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm hover:text-[var(--color-text-primary)] hover:border-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
               title="Download formatted PDF code review report"
             >
               {isExportingPdf ? (
                 <>
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--color-text-secondary)] border-t-transparent"></div>
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent"></div>
                   <span>Exporting...</span>
                 </>
               ) : (
                 <>
+                  <svg className="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
                   <span>PDF Report</span>
                 </>
               )}
@@ -327,28 +389,48 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
             <button
               onClick={handleGeneratePRSummary}
               disabled={isGeneratingSummary}
-              className="rounded px-2.5 py-1.5 text-xs font-semibold bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-indigo-500/20 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
               title="Compile GitHub-ready review comment summary"
             >
-              {isGeneratingSummary ? 'Compiling PR...' : 'PR Summary'}
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              <span>{isGeneratingSummary ? 'Compiling PR...' : 'PR Summary'}</span>
+            </button>
+            <button
+              onClick={handleAutoRemediate}
+              disabled={isAutoRemediating || !report?.findings?.length}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-emerald-500/25 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              title="Automatically resolve all vulnerabilities & generate clean code"
+            >
+              {isAutoRemediating ? (
+                <>
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  <span>Remediating All...</span>
+                </>
+              ) : (
+                <>
+                  <span>⚡ Auto-Remediate All</span>
+                </>
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* PR Summary Panel (on-demand loading) */}
+      {/* PR Summary Panel */}
       {(isGeneratingSummary || prSummary || summaryError) && (
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 pr-summary-panel no-print space-y-3">
-          <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-lg no-print space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🚀</span>
-              <h4 className="font-semibold text-sm text-[var(--color-text-primary)]">Pull Request Summary Agent</h4>
+              <span className="text-xl">🚀</span>
+              <h4 className="font-bold text-sm text-[var(--color-text-primary)]">Pull Request Summary Agent</h4>
             </div>
             <div className="flex items-center gap-2">
               {prSummary && (
                 <button
                   onClick={handleCopySummary}
-                  className="rounded px-2 py-1 text-xs font-medium bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)]/20 border border-[var(--color-success)]/20 transition-all flex items-center gap-1 cursor-pointer"
+                  className="rounded-lg px-3 py-1.5 text-xs font-bold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   {copiedSummary ? '✓ Copied!' : 'Copy PR Comment'}
                 </button>
@@ -358,7 +440,7 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
                   setPrSummary(null)
                   setSummaryError(null)
                 }}
-                className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-2 py-1 cursor-pointer"
+                className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-2 py-1 cursor-pointer font-medium"
               >
                 Close
               </button>
@@ -366,21 +448,21 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
           </div>
 
           {isGeneratingSummary && (
-            <div className="flex items-center gap-3 py-4 text-[var(--color-text-secondary)] text-sm">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-brand)] border-t-transparent"></div>
-              <span>Secoria agent compiling unified report and generating GitHub PR comment...</span>
+            <div className="flex items-center gap-3 py-6 text-[var(--color-text-secondary)] text-sm justify-center">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent"></div>
+              <span>Secoria PR agent synthesizing findings and formatting markdown tables...</span>
             </div>
           )}
 
           {summaryError && (
-            <div className="rounded-md border border-rose-500/20 bg-rose-500/5 p-3 text-xs text-rose-500">
+            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs font-semibold text-rose-500">
               {summaryError}
             </div>
           )}
 
           {prSummary && (
             <div className="relative">
-              <pre className="rounded border border-[var(--color-border)] bg-[var(--color-bg)] p-3 text-xs overflow-auto font-mono text-[var(--color-text-primary)] max-h-80 whitespace-pre-wrap">
+              <pre className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4 text-xs overflow-auto font-mono text-[var(--color-text-primary)] max-h-80 whitespace-pre-wrap leading-relaxed">
                 {prSummary}
               </pre>
             </div>
@@ -388,83 +470,167 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
         </div>
       )}
 
-      {/* Severity summary cards & Health Score Gauge — acts as filters & score display */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-        {SEVERITY_ORDER.map((severity) => {
-          const count = summary[severity] ?? 0
-          const isActive = activeSeverities.has(severity)
-          const styles = SEVERITY_STYLES[severity]
-          return (
+      {/* View Switcher Tab Bar */}
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2 no-print">
+        <div className="inline-flex rounded-xl border border-[var(--color-border)] p-1 bg-[var(--color-surface)] shadow-xs">
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'list'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            <span>📋 Findings List ({filteredFindings.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('visual')}
+            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'visual'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            <span>📊 Visual Graphs & Analytics</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
+        </div>
+
+        {/* Active Filter Pill */}
+        {selectedCategory && (
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 px-3 py-1 text-xs text-indigo-400 font-semibold">
+            <span>Filter: <strong>{selectedCategory}</strong></span>
             <button
-              key={severity}
-              onClick={() => toggleSeverity(severity)}
-              className={`rounded-lg border p-3 text-left transition-colors cursor-pointer ${
-                isActive ? styles.cardActive : 'border-[var(--color-border)] bg-[var(--color-surface)] opacity-50'
-              }`}
-              title={`Click to ${isActive ? 'hide' : 'show'} ${severity} findings`}
+              onClick={() => setSelectedCategory(null)}
+              className="hover:text-indigo-200 cursor-pointer font-black ml-1"
+              title="Clear category filter"
             >
-              <div className={`text-xl font-bold ${styles.text}`}>{count}</div>
-              <div className="text-xs capitalize text-[var(--color-text-secondary)]">{severity}</div>
+              ✕
             </button>
-          )
-        })}
-        <HealthScoreGauge score={report.health_score ?? 100} />
+          </div>
+        )}
       </div>
 
-      {/* Filter by agent + sort controls */}
-      {summary.total_findings > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-          <div className="flex gap-1">
-            {['all', 'code_analysis', 'security'].map((agent) => (
-              <button
-                key={agent}
-                onClick={() => setActiveAgent(agent)}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
-                  activeAgent === agent
-                    ? 'bg-[var(--color-brand)] text-white'
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                }`}
-              >
-                {agent === 'all' ? 'All' : AGENT_LABELS[agent]}
-              </button>
-            ))}
+      {/* Conditional View: Visual Graphs vs List */}
+      {activeTab === 'visual' ? (
+        <VisualAnalytics
+          report={report}
+          selectedCategory={selectedCategory}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat)
+            if (cat) setActiveTab('list')
+          }}
+          selectedSeverity={activeSeverities.size === 1 ? Array.from(activeSeverities)[0] : null}
+          onSelectSeverity={(sev) => {
+            handleSelectSeveritySingle(sev)
+            if (sev) setActiveTab('list')
+          }}
+        />
+      ) : (
+        <div className="space-y-4">
+          {/* Severity Summary Filter Cards & Health Gauge */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
+            {SEVERITY_ORDER.map((severity) => {
+              const count = summary[severity] ?? 0
+              const isActive = activeSeverities.has(severity)
+              const styles = SEVERITY_STYLES[severity]
+              return (
+                <button
+                  key={severity}
+                  onClick={() => toggleSeverity(severity)}
+                  className={`rounded-2xl border p-4 text-left transition-all duration-200 cursor-pointer ${
+                    isActive ? styles.cardActive : 'border-[var(--color-border)] bg-[var(--color-surface)] opacity-40 hover:opacity-75'
+                  }`}
+                  title={`Click to ${isActive ? 'hide' : 'show'} ${severity} findings`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className={`text-2xl font-extrabold font-mono ${styles.text}`}>{count}</div>
+                    <span className={`h-2 w-2 rounded-full ${styles.dot}`} />
+                  </div>
+                  <div className="mt-1 text-xs font-bold capitalize text-[var(--color-text-secondary)]">{severity}</div>
+                </button>
+              )
+            })}
+            <HealthScoreGauge score={report.health_score ?? 100} />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[var(--color-text-secondary)]">Sort by</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-xs text-[var(--color-text-primary)] cursor-pointer"
-            >
-              <option value="severity">Severity</option>
-              <option value="line">Line number</option>
-            </select>
-          </div>
+
+          {/* Filter by agent + sort controls */}
+          {summary.total_findings > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm">
+              <div className="flex items-center gap-1.5">
+                {['all', 'code_analysis', 'security'].map((agent) => (
+                  <button
+                    key={agent}
+                    onClick={() => setActiveAgent(agent)}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                      activeAgent === agent
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg)]'
+                    }`}
+                  >
+                    {agent === 'all' ? 'All Findings' : AGENT_LABELS[agent]}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-[var(--color-text-secondary)]">Sort by</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] cursor-pointer focus:outline-none"
+                >
+                  <option value="severity">Severity (Critical First)</option>
+                  <option value="line">Line Number</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Findings List */}
+          {summary.total_findings === 0 ? (
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center shadow-sm">
+              <div className="text-2xl mb-2">🎉</div>
+              <h4 className="text-base font-bold text-emerald-500">Perfect Health Score (100/100)</h4>
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">No quality smells or OWASP vulnerabilities detected in the submitted code.</p>
+            </div>
+          ) : filteredFindings.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[var(--color-border)] p-6 text-center text-sm text-[var(--color-text-secondary)]">
+              No findings match the selected severity and category filters.
+              {selectedCategory && (
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className="block mx-auto mt-2 text-xs font-bold text-indigo-500 underline cursor-pointer"
+                >
+                  Clear Category Filter
+                </button>
+              )}
+            </div>
+          ) : (
+            <ul className="space-y-3.5">
+              {filteredFindings.map((finding, idx) => (
+                <FindingItem
+                  key={idx}
+                  finding={finding}
+                  fullCode={fullCode}
+                  language={language}
+                  onAskAssistant={onAskAssistant}
+                />
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
-      {/* Findings list */}
-      {summary.total_findings === 0 ? (
-        <p className="rounded-md bg-[var(--color-success)]/10 p-4 text-sm text-[var(--color-success)]">
-          No issues found — clean code quality and no OWASP-category vulnerabilities detected.
-        </p>
-      ) : filteredFindings.length === 0 ? (
-        <p className="rounded-md border border-dashed border-[var(--color-border)] p-4 text-center text-sm text-[var(--color-text-secondary)]">
-          No findings match the current filters.
-        </p>
-      ) : (
-        <ul className="space-y-3">
-          {filteredFindings.map((finding, idx) => (
-            <FindingItem
-              key={idx}
-              finding={finding}
-              fullCode={fullCode}
-              language={language}
-              onAskAssistant={onAskAssistant}
-            />
-          ))}
-        </ul>
-      )}
+      {/* 1-Click Auto-Remediation & Health Comparator Modal */}
+      <CodeComparatorModal
+        isOpen={isComparatorOpen}
+        onClose={() => setIsComparatorOpen(false)}
+        originalCode={fullCode}
+        remediationData={remediationData}
+        language={language}
+        onApplyCleanCode={onApplyCleanCode}
+      />
     </div>
   )
 }
