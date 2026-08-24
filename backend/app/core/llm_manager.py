@@ -99,7 +99,16 @@ class LLMKeyManager:
                     if response_format:
                         kwargs["response_format"] = response_format
 
-                    response = client.chat.completions.create(**kwargs)
+                    try:
+                        response = client.chat.completions.create(**kwargs)
+                    except Exception as call_exc:
+                        if response_format and ("json_validate_failed" in str(call_exc) or "400" in str(call_exc)):
+                            kwargs_no_rf = dict(kwargs)
+                            kwargs_no_rf.pop("response_format", None)
+                            response = client.chat.completions.create(**kwargs_no_rf)
+                        else:
+                            raise call_exc
+
                     # If successful, remember this working key
                     self._current_index = key_idx
                     return response.choices[0].message.content

@@ -1,273 +1,261 @@
 # Secoria
 
-**AI Code Review & Security Analysis Agent**
+**AI Code Review & Security Analysis Agent**  
 *Infosys Springboard Internship Project*
 
-Secoria is an intelligent, multi-agent platform that automatically analyzes source code for quality issues, security vulnerabilities, and best-practice violations — reducing manual code review effort and accelerating secure development.
+Secoria is an intelligent, multi-agent platform that automatically analyzes source code for quality issues, cognitive/cyclomatic complexity, and OWASP Top 10 security vulnerabilities — reducing manual code review effort, accelerating secure development, and providing 1-click AI auto-remediation.
 
-> **Current Status:** Milestone 2 Complete (Code Analysis Agent + Security Vulnerability Agent + Multi-Agent Orchestration + Findings Display & Severity Scoring Module)
+> **Project Status:** ✅ **Milestone 4 Complete — Final Delivery (59/59 Automated Tests Passing)**
 
 ---
 
-## Table of Contents
+## 📑 Table of Contents
 
-- [Project Vision](#project-vision)
+- [Project Vision & Agent Pipeline](#project-vision--agent-pipeline)
 - [Milestone Progress](#milestone-progress)
-- [Architecture](#architecture)
+- [System Architecture](#system-architecture)
 - [Folder Structure](#folder-structure)
 - [Tech Stack & Dependencies](#tech-stack--dependencies)
-- [Installation](#installation)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Future Scope](#future-scope)
+- [Installation & Quickstart](#installation--quickstart)
+- [API Endpoints Reference](#api-endpoints-reference)
+- [Key Features](#key-features)
+- [Demonstration Test Suite](#demonstration-test-suite)
 - [License](#license)
 
 ---
 
-## Project Vision
+## 🎯 Project Vision & Agent Pipeline
 
-Software teams struggle with inconsistent code quality, undetected security vulnerabilities, and slow manual reviews. Secoria addresses this with a multi-agent AI pipeline:
+Software engineering teams struggle with inconsistent code quality, undetected security vulnerabilities, and slow manual code reviews. Secoria addresses this with a concurrent multi-agent AI pipeline:
 
-| Agent | Responsibility | Status |
-|---|---|---|
-| Code Analysis Agent | Detects code smells, design anti-patterns, complexity issues | ✅ Milestone 2 |
-| Security Vulnerability Agent | Scans for OWASP-standard vulnerabilities (injection, insecure deserialization, hardcoded secrets, weak crypto, etc.) with severity and location-specific flagging | ✅ Milestone 2 |
-| Multi-Agent Orchestrator | Runs both agents concurrently, merges findings into one prioritized, deduplicated report | ✅ Milestone 2 |
-| Remediation Agent | Generates fix recommendations with corrected code | ✅ Milestone 3 |
-| PR Summary Agent | Compiles findings into a human-readable review summary | In Progress |
-| Conversational Code Assistant | RAG-powered Q&A grounded in secure coding knowledge base | In Progress |
-
----
-
-## Milestone Progress
-
-- [x] **Milestone 1 — Foundations** ✅ Complete & verified
-  - [x] System architecture & folder structure designed
-  - [x] Code Submission Module (paste/upload Python & Java, language detection, syntax validation)
-  - [x] Secure Coding Knowledge Base — 306 chunks indexed in ChromaDB (9 OWASP PDFs + 5 markdown reference sheets)
-- [x] **Milestone 2 — Multi-Agent Orchestration & Analysis Pipeline** ✅ Complete & verified
-  - [x] Code Analysis Agent (code smells, cyclomatic + cognitive complexity, God Object detection) — Python & Java
-  - [x] Security Vulnerability Agent (OWASP-mapped vulnerabilities with line-specific checks) — Python & Java
-  - [x] Multi-agent orchestration — concurrent dispatch, merged/prioritized/deduplicated findings via `/api/review`
-  - [x] Findings Display & Severity Scoring Module — unified frontend dashboard with interactive cards
-  - [x] External tool integration — Bandit, Semgrep, Pylint, Flake8 running in isolated environments (pipx)
-  - [x] **50/50 backend tests passing**
-- [x] **Milestone 3 — Agent Report Generation, Chat & Remediation (Completed)**
-  - [x] Remediation Agent — backend LLM (Groq) + frontend stateful integration mapping to Slide 2 recommendation types
-  - [x] Findings Display Module enhancement — overall code health score
-  - [x] Conversational Code Assistant — RAG-powered chat interface grounded in ChromaDB
-  - [x] PR Summary Agent — pull-request structured review summary (with CSV & PDF export)
+| Agent / Module | Responsibility | Status |
+|---|---|:---:|
+| **Code Submission & Validation** | Language detection & AST-based syntax validation for Python & Java | ✅ Complete |
+| **Code Analysis Agent** | Detects code smells, cyclomatic/cognitive complexity (`radon`), and God Objects | ✅ Complete |
+| **Security Vulnerability Agent** | Scans for OWASP Top 10 vulnerabilities (SQLi, Command Injection, Insecure Deserialization, Hardcoded Secrets, Weak Crypto) | ✅ Complete |
+| **Multi-Agent Orchestrator** | Concurrent dispatch (`asyncio.gather`), deduplication, ranking, and **Code Health Score (0–100)** | ✅ Complete |
+| **Remediation Agent** | Groq LLM-driven fix recommendations & **1-Click Auto-Remediation** with side-by-side code diffs | ✅ Complete |
+| **Conversational Code Assistant** | RAG-powered Q&A grounded in an offline **ChromaDB** vector store with page citations | ✅ Complete |
+| **PR Summary Agent** | Generates markdown Pull Request review comments with severity matrices & action plans | ✅ Complete |
+| **PDF Report Generation** | Server-side binary PDF report compilation with health score badges & roadmaps | ✅ Complete |
 
 ---
 
-## Architecture
+## 🏆 Milestone Progress
 
-Secoria is a **monorepo** with three independently runnable systems, connected by stable data contracts and a shared data artifact (the ChromaDB knowledge base).
-
-```
-┌─────────────────┐        HTTP (JSON)        ┌───────────────────────────┐
-│  React Frontend  │ ────────────────────────► │      FastAPI Backend       │
-│  (Vite + Tailwind)│ ◄──────────────────────── │      (Layered/Clean)       │
-└─────────────────┘                            │                             │
-                                                │  ┌───────────────────────┐  │
-                                                │  │      Orchestrator      │  │
-                                                │  │  (concurrent dispatch,  │  │
-                                                │  │   merge & prioritize)   │  │
-                                                │  └──────────┬─────────┬──┘  │
-                                                │             │         │     │
-                                                │    ┌────────▼──┐  ┌───▼────┐│
-                                                │    │Code Analysis│ │Security ││
-                                                │    │   Agent    │  │  Agent  ││
-                                                │    └────────────┘  └────────┘│
-                                                └───────────────────────────┘
-                                                              │
-                                                              │ (Milestone 4 reads)
-                                                              ▼
-                                                    ┌──────────────────┐
-                                                    │  ChromaDB Vector  │
-                                                    │  Store (built by   │
-                                                    │  knowledge-base/)  │
-                                                    └──────────────────┘
-```
-
-The backend follows a **layered (Clean) architecture**:
-
-```
-api/           → HTTP routes only (thin controllers): submission, analysis, security, orchestration
-services/      → Business logic (language detection, syntax validation) — reused unchanged by every agent
-models/        → Pydantic request/response schemas (per-module contracts)
-core/          → Config, logging (cross-cutting concerns)
-agents/        → code_analysis/, security/ (remediation/, pr_summary/ still reserved for later)
-orchestrator/  → Coordinates agents; not itself an agent — a sibling to agents/, not nested inside it
-```
-
-This design follows the **Open/Closed Principle**: every agent and the Orchestrator were added without modifying Milestone 1's `services/` or `models/` code — proven in practice across two full milestones now, not just claimed on paper.
-
-Full reasoning for every architectural decision — including alternatives considered and trade-offs accepted — is documented in [`docs/decision-log.md`](docs/decision-log.md). This is the single most useful document for mentor review Q&A.
+- [x] **Milestone 1 — Foundations** ✅
+  - Clean layered architecture designed (`api/`, `services/`, `models/`, `agents/`, `core/`).
+  - Code Submission Module (paste/upload Python & Java, heuristics, AST syntax validation).
+  - Secure Coding Knowledge Base — 306 chunks indexed in ChromaDB (10 OWASP PDFs + 5 markdown reference sheets).
+- [x] **Milestone 2 — Multi-Agent Orchestration & Static Analysis Pipeline** ✅
+  - Code Analysis Agent (code smells, McCabe complexity, deep nesting, God Object detection).
+  - Security Vulnerability Agent (OWASP Top 10 rules with line-specific code snippets).
+  - Multi-Agent Orchestrator (`asyncio.gather` concurrent dispatch, deduplication, severity sorting via `/api/review`).
+  - External tool integration (Bandit, Semgrep, Pylint, Flake8) running in isolated `pipx` environments.
+- [x] **Milestone 3 — Agent Report Generation, Chat & Remediation** ✅
+  - Remediation Agent (Groq LLM + deterministic regex/AST fallback guarantee).
+  - Code Health Score mathematical formula (100 baseline minus weighted severity deductions).
+  - Conversational Code Assistant (RAG Chatbot grounded in ChromaDB vector store).
+  - PR Summary Agent (structured PR markdown review comments).
+- [x] **Milestone 4 — Final Delivery & Advanced Developer Tools** ✅
+  - **1-Click Full-Code Auto-Remediation** with interactive side-by-side **Code Comparator Diff Modal**.
+  - Server-side **ReportLab PDF review report export** (`POST /api/report/pdf`).
+  - **Visual Analytics Dashboard** (severity distribution, issue breakdown charts).
+  - **59/59 automated backend unit & integration tests passing**.
 
 ---
 
-## Folder Structure
+## 🏗️ System Architecture
+
+Secoria is built as a **monorepo** with a clean layered FastAPI backend and a modern React + Vite frontend:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           React + Vite Frontend                             │
+│  (Custom Code Editor, Health Score Gauge, Interactive Finding Cards,        │
+│   Code Comparator Diff Modal, RAG Chat Sidebar, PDF/PR Export Controls)     │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ HTTP POST (JSON / Multipart)
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      FastAPI Layered Backend (Clean Arch)                   │
+│                                                                             │
+│  [API Routers] (submission, analysis, security, orchestration, chat, etc.)  │
+│  [Services]    (Shared: language_detector.py, syntax_validator.py)          │
+│                                                                             │
+│                                      │                                      │
+│                                      ▼                                      │
+│                         ┌──────────────────────────┐                        │
+│                         │ Multi-Agent Orchestrator │                        │
+│                         │  (asyncio.gather + pool) │                        │
+│                         └────────────┬─────────────┘                        │
+│                                      │                                      │
+│                     ┌────────────────┴────────────────┐                     │
+│                     ▼                                 ▼                     │
+│       ┌───────────────────────────┐     ┌───────────────────────────┐       │
+│       │    Code Analysis Agent    │     │ Security Vulnerability Agt│       │
+│       │  - Radon (Cyclomatic CC)  │     │  - AST OWASP Top 10 rules │       │
+│       │  - Javalang (Java AST)    │     │  - Bandit, Semgrep (pipx) │       │
+│       │  - Smells & Deep Nesting  │     │  - SQLi, CmdInj, Secrets  │       │
+│       └─────────────┬─────────────┘     └─────────────┬─────────────┘       │
+│                     └────────────────┬────────────────┘                     │
+│                                      ▼                                      │
+│                         [Deduplicate & Health Score]                        │
+│                                      │                                      │
+│          ┌───────────────────────────┼───────────────────────────┐          │
+│          ▼                           ▼                           ▼          │
+│  ┌───────────────┐           ┌───────────────┐           ┌───────────────┐  │
+│  │ Remediation   │           │ RAG Chat      │           │ PR & PDF      │  │
+│  │ Agent (Groq   │           │ Assistant     │           │ Report Engine │  │
+│  │ Llama 3.3/Qwen│           │ (LangChain +  │           │ (ReportLab    │  │
+│  │ + AST fallback│           │ ChromaDB k=3) │           │ Server-side)  │  │
+│  └───────────────┘           └───────┬───────┘           └───────────────┘  │
+└──────────────────────────────────────┼──────────────────────────────────────┘
+                                       ▼
+                        ┌─────────────────────────────┐
+                        │ ChromaDB Vector Store       │
+                        │ 306 Chunks / all-MiniLM-L6  │
+                        │ (10 OWASP PDFs + 5 MD docs) │
+                        └─────────────────────────────┘
+```
+
+---
+
+## 📁 Folder Structure
 
 ```
 secoria/
-├── backend/                    FastAPI application
+├── backend/                    FastAPI Backend Application
 │   ├── app/
-│   │   ├── api/                  submission.py, analysis.py, security.py, orchestration.py
-│   │   ├── core/                  Config & logging
-│   │   ├── models/                 submission_schema.py, analysis_schema.py, security_schema.py
-│   │   ├── services/                Language detection & syntax validation (shared by all agents)
+│   │   ├── api/                Route handlers (submission, analysis, security, orchestration, remediation, chat, pr_summary, report)
+│   │   ├── core/               Config, logging, and LLM Key Manager with failover
+│   │   ├── models/             Pydantic request & response schemas
+│   │   ├── services/           Shared business logic (language detection & syntax validation)
 │   │   ├── agents/
-│   │   │   ├── code_analysis/        Code Analysis Agent — code smells, complexity, design issues
-│   │   │   └── security/              Security Vulnerability Agent — OWASP-mapped vulnerability detection
-│   │   └── orchestrator/             Concurrent agent dispatch + merge/prioritize/deduplicate logic
-│   ├── tests/                     45 tests across submission, both agents, and the orchestrator
+│   │   │   ├── code_analysis/  Code smells, cyclomatic complexity, God Object detection
+│   │   │   ├── security/       OWASP Top 10 vulnerability scanner & external CLI wrappers
+│   │   │   └── remediation/    LLM fix generator & 1-click auto-remediation engine
+│   │   └── orchestrator/       Concurrent dispatcher, deduplication, and health scoring
+│   ├── tests/                  59 automated unit & integration tests
 │   └── requirements.txt
-├── frontend/                   React + Vite + Tailwind UI
+├── frontend/                   React + Vite + Tailwind UI Dashboard
 │   └── src/
-│       ├── components/            CodeEditor (syntax highlighting + line numbers), FileUpload,
-│       │                           FindingsDashboard (severity cards, filters, sort), ThemeToggle
-│       ├── context/                 ThemeContext (dark/light mode)
-│       └── services/                  API client (submitCode, scanSecurity, runReview)
-├── knowledge-base/             Offline ingestion pipeline
-│   ├── documents/                 5 self-authored .md docs + 9 official OWASP Cheat Sheet PDFs
-│   ├── scripts/                    loader → chunker → embedder → build_kb
-│   └── chroma_store/                Persisted vector database (generated, gitignored)
-├── docs/
-│   ├── decision-log.md
-│   └── milestone-1-presentation-script.md
+│       ├── components/         CodeEditor, FindingsDashboard, CodeComparatorModal, ChatSidebar, VisualAnalytics, LandingPage
+│       ├── context/            ThemeContext (Dark / Light mode)
+│       └── services/           api.js client
+├── knowledge-base/             Offline Vector Ingestion Pipeline
+│   ├── documents/              10 official OWASP PDFs + 5 secure coding Markdown sheets
+│   ├── scripts/                loader.py → chunker.py → embedder.py → build_kb.py
+│   └── chroma_store/           Persisted vector database (306 chunks)
+├── docs/                       Architecture decision logs, presentation guides, sample suites
 ├── LICENSE
 └── README.md
 ```
 
 ---
 
-## Tech Stack & Dependencies
+## 💻 Tech Stack & Dependencies
 
 ### Backend
-| Package | Purpose |
-|---|---|
-| `fastapi` | Web framework — async, auto-generated OpenAPI docs, Pydantic-native validation |
-| `uvicorn` | ASGI server to run the FastAPI app |
-| `python-multipart` | Enables `UploadFile` handling for file uploads |
-| `pydantic` | Data validation and schema definitions (contract between frontend/backend) |
-| `javalang` | Pure-Python Java syntax parser and AST — used for syntax validation, and both agents' Java analyzers, no JDK required |
-| `radon` | Computes Cyclomatic Complexity and Maintainability Index for Python (Code Analysis Agent) |
-
-**External CLI tools (installed via `pipx`, NOT in `requirements.txt` — see Decision Log):**
-
-| Tool | Purpose |
-|---|---|
-| `bandit` | Established Python security scanner — broadens Security Agent coverage beyond our own hand-written rules |
-| `semgrep` | Multi-language (Python + Java) security & code-smell scanner with community-maintained rule registry |
-| `pylint` | Established Python code quality linter — broadens Code Analysis Agent coverage |
-| `flake8` | Python style/logic checker (PEP 8 + Pyflakes) |
-
-> **Why `pipx`, not `pip install` into `requirements.txt`:** installing `semgrep` directly into the backend's virtual environment was tested and confirmed to break FastAPI — its dependency chain silently overwrites `starlette` to an incompatible version. These tools are invoked as isolated subprocess commands instead, never imported as Python libraries. Full incident write-up in `docs/decision-log.md`.
+- **FastAPI & Uvicorn**: High-performance asynchronous REST API framework.
+- **Pydantic**: Type-safe request/response schema validation and data contracts.
+- **Radon & AST**: Python cyclomatic complexity and abstract syntax tree parser.
+- **Javalang**: Pure-Python Java 8 AST parser (no JDK required).
+- **ReportLab**: Server-side professional PDF generation.
+- **OpenAI Client & Groq**: High-throughput GenAI inference (Llama 3.3 / Qwen / GPT-OSS models).
 
 ### Frontend
-| Package | Purpose |
-|---|---|
-| `react` | UI library, component-based architecture |
-| `vite` | Fast dev server & build tool |
-| `tailwindcss` | Utility-first styling, native dark-mode support |
-| `prismjs` | Syntax tokenization for code highlighting (Python & Java) |
-| `react-simple-code-editor` | Lightweight (~2KB) textarea-with-highlighting overlay — chosen over Monaco/CodeMirror to stay dependency-proportionate |
+- **React & Vite**: Fast component architecture and modern HMR.
+- **Tailwind CSS v4**: Utility-first responsive styling with dark/light themes.
+- **Prism.js & Simple Code Editor**: Syntax tokenization and line-numbered editor overlay.
 
-### Knowledge Base
-| Package | Purpose |
-|---|---|
-| `langchain` | Document loading & chunking orchestration |
-| `langchain-community` | Community document loaders (PDF, text, etc.) |
-| `langchain-chroma` | LangChain ↔ ChromaDB integration |
-| `chromadb` | Local, file-based vector database |
-| `sentence-transformers` | Generates embeddings locally (free, no API key) |
-| `pymupdf` | PDF text extraction |
-| `posthog<3.0.0` | Pinned to match `chromadb`'s expected telemetry API (fixes a version-incompatibility bug — see Decision Log) |
-
-> Each dependency is explained in depth — why it was chosen, what it replaces, and mentor Q&A — in the corresponding module's section of `docs/decision-log.md`.
+### Knowledge Base & RAG
+- **ChromaDB**: Local file-based vector database.
+- **Sentence-Transformers (`all-MiniLM-L6-v2`)**: Fast, 0-cost local dense vector embeddings.
+- **PyMuPDF**: Document loader for PDF extraction.
+- **LangChain**: Text chunking (`RecursiveCharacterTextSplitter`).
 
 ---
 
-## Installation
+## ⚙️ Installation & Quickstart
 
+### Prerequisites
+- **Python 3.12+**
+- **Node.js 18+** & npm
+
+### 1. Configure Environment Variables
+In `backend/.env` (copy from `backend/.env.example`):
+```env
+LOG_LEVEL=INFO
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=qwen/qwen3.6-27b
+```
+
+### 2. Start the Backend
 ```powershell
-# External CLI tools (one-time, system-wide — used by Security & Code Analysis agents)
-pip install --user pipx
-pipx ensurepath
-# close and reopen your terminal here, then:
-pipx install bandit
-pipx install pylint
-pipx install flake8
-pipx install semgrep
-
-# Backend
 cd backend
 python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
 
-# Frontend
+# If PowerShell restricts script execution, run:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+.\venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+### 3. Start the Frontend
+```powershell
 cd frontend
 npm install
 npm run dev
-
-# Knowledge Base (one-time build)
-# NOTE: requires Python 3.12 specifically (not 3.13) — see docs/decision-log.md
-cd knowledge-base
-py -3.12 -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python scripts/build_kb.py
 ```
 
-**API endpoints** (once the backend is running, full interactive docs at `http://localhost:8000/docs`):
+Open **`http://localhost:5173/`** in your browser.
 
-| Endpoint | Purpose |
-|---|---|
-| `POST /api/submit` | Language detection + syntax validation only (Milestone 1) |
-| `POST /api/analyze` | Code Analysis Agent only |
-| `POST /api/security-scan` | Security Vulnerability Agent only |
-| `POST /api/review` | **Orchestrated review** — both agents, merged findings (used by the main UI) |
-
----
-
-## Features
-
-**Submission (Milestone 1)**
-- Paste Python or Java code into a syntax-highlighted editor with line numbers, or upload `.py`/`.java` files
-- Automatic programming language detection and syntax validation
-- Fully responsive UI with dark and light mode
-
-**Code Review (Milestone 2)**
-- One-click **"Run Full Review"** — dispatches Code Analysis and Security agents concurrently
-- Code smell, complexity (cyclomatic + cognitive), and design anti-pattern detection (God Object, high complexity)
-- OWASP-mapped security vulnerability detection with severity and exact line/code-snippet location
-- **External tool integration**: Bandit and Semgrep (security), Pylint and Flake8 (code quality) run alongside our own custom rules, broadening detection coverage well beyond a hand-picked rule list — isolated via `pipx` to avoid dependency conflicts with the backend
-- Unified findings dashboard: severity summary cards (double as clickable filters), source-agent filter, sort by severity or line number
-- Secure coding knowledge base indexed from official OWASP Cheat Sheet Series PDFs plus self-authored reference docs — 306 chunks (ready for Milestone 4's RAG retriever)
+### 4. Run Automated Backend Tests (59 Tests)
+```powershell
+cd backend
+.\venv\Scripts\python.exe -m pytest
+```
 
 ---
 
-## Screenshots
+## 🔌 API Endpoints Reference
 
-| Light Mode | Dark Mode |
-|---|---|
-| ![Light mode submission UI](docs/screenshots/light-mode.png) | ![Dark mode submission UI](docs/screenshots/dark-mode.png) |
+Interactive OpenAPI documentation is available at `http://localhost:8000/docs`:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Server health and status check |
+| `POST` | `/api/submit` | Validates syntax and detects programming language |
+| `POST` | `/api/analyze` | Code Analysis Agent (complexity and code smells) |
+| `POST` | `/api/security-scan` | Security Vulnerability Agent (OWASP scan) |
+| `POST` | `/api/review` | **Full Multi-Agent Orchestrated Review** (Health score, merged findings) |
+| `POST` | `/api/remediate` | Generates AI fix snippet and explanation for a single finding |
+| `POST` | `/api/remediate-all` | **1-Click Auto-Remediation** producing refactored source code and changelog |
+| `POST` | `/api/chat` | RAG Conversational Assistant with ChromaDB source citations |
+| `POST` | `/api/pr-summary` | Compiles review into markdown Pull Request comments |
+| `POST` | `/api/report/pdf` | Exports complete code review report as a downloadable PDF |
 
 ---
 
-## Future Scope
+## 🧪 Demonstration Test Suite
 
-- RAG-powered conversational assistant grounded in the secure coding knowledge base (Milestone 4)
-- Remediation Agent — generates corrected code examples per finding (Milestone 4)
-- PR Summary Agent — human-readable review summary compiling all findings (Milestone 4)
-- Exportable PDF/Markdown code review reports (Milestone 3)
-- CI/CD integration (GitHub Actions bot for automated PR reviews)
+Three pre-configured demonstration tiers are included in the UI sample selector and `docs/demo_samples/`:
+
+1. **Tier 1: Clean & Secure Code (`01_clean_code.py`)**
+   - *Characteristics:* Parameterized database queries, low complexity, clean modular design.
+   - *Expected Outcome:* **100/100 Health Score, 0 Findings (Clean)**.
+2. **Tier 2: Moderate Complexity & Smells (`02_moderate_code_smells.py`)**
+   - *Characteristics:* 7 levels of nested control flow, cyclomatic complexity = 12 (> 10 threshold).
+   - *Expected Outcome:* **~70/100 Health Score, Deep Nesting & Complexity Smell**.
+3. **Tier 3: Critical OWASP Vulnerabilities (`03_critical_vulnerabilities.py`)**
+   - *Characteristics:* SQL string concatenation, `os.system()` shell execution, weak MD5 hashing, unpickling raw bytes, hardcoded AWS secrets.
+   - *Expected Outcome:* **< 50/100 Health Score (Critical)**. Clicking **"Auto-Remediate Code"** refactors the file, and re-scanning restores the score to **100/100**.
 
 ---
 
-## License
+## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is developed under the Infosys Springboard Internship Program and licensed under the [MIT License](LICENSE).

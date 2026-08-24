@@ -99,8 +99,12 @@ async def chat_with_assistant(request: Request, payload: ChatRequest) -> ChatRes
             "\nACTIVE FINDING CONTEXT (The developer is inspecting this issue):\n"
             f"Finding Title: {payload.finding_title}\n"
         )
-        if payload.code_snippet:
-            system_instruction += f"Flagged Code:\n```\n{payload.code_snippet}\n```\n"
+    if payload.code_snippet:
+        system_instruction += (
+            "\nACTIVE CODE CONTEXT (Developer's submitted source code):\n"
+            f"```\n{payload.code_snippet}\n```\n"
+            "If the user asks about problems, vulnerabilities, or bugs in their code, analyze this source code directly, explain the specific problems found, and provide secure remediation steps grounded in OWASP best practices.\n"
+        )
 
     # 5. Build messages array incorporating conversation history
     messages = [{"role": "system", "content": system_instruction}]

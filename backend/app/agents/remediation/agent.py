@@ -131,6 +131,32 @@ def _deterministic_remediation_fallback(request: RemediateAllRequest) -> Remedia
     )
 
 
+def _extract_json_payload(text: str) -> dict:
+    text = text.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+
+    start = text.find("{")
+    if start != -1:
+        decoder = json.JSONDecoder()
+        try:
+            obj, _ = decoder.raw_decode(text[start:])
+            return obj
+        except Exception:
+            pass
+
+    match = re.search(r"\{[\s\S]*\}", text)
+    if match:
+        return json.loads(match.group(0))
+
+    raise ValueError(f"Could not extract valid JSON from LLM response: {text[:200]}")
+
+
 def generate_remediation(request: RemediationRequest) -> RemediationResult:
     """
     Calls Groq via OpenAI client with strict schema validation.
@@ -158,17 +184,28 @@ def generate_remediation(request: RemediationRequest) -> RemediationResult:
     logger.info("Requesting remediation for finding: %s", request.finding_title)
 
     try:
-        response = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
-            messages=[
-                {"role": "system", "content": _SYSTEM_INSTRUCTION},
-                {"role": "user", "content": prompt},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.2,
-        )
+        try:
+            response = client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=[
+                    {"role": "system", "content": _SYSTEM_INSTRUCTION},
+                    {"role": "user", "content": prompt},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.2,
+            )
+        except Exception as api_exc:
+            logger.info("Retrying without strict response_format: %s", api_exc)
+            response = client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=[
+                    {"role": "system", "content": _SYSTEM_INSTRUCTION},
+                    {"role": "user", "content": prompt + "\nRespond with a valid JSON object only."},
+                ],
+                temperature=0.2,
+            )
         raw_content = response.choices[0].message.content
-        parsed_json = json.loads(raw_content)
+        parsed_json = _extract_json_payload(raw_content)
         return RemediationResult(**parsed_json)
     except Exception as exc:
         logger.error("LLM remediation call failed: %s", exc)
@@ -209,7 +246,7 @@ def generate_full_remediation(request: RemediateAllRequest) -> RemediateAllRespo
             response_format={"type": "json_object"},
             timeout=35.0,
         )
-        parsed_json = json.loads(raw_content)
+        parsed_json = _extract_json_payload(raw_content)
         return RemediateAllResponse(
             remediated_code=parsed_json.get("remediated_code", request.full_code),
             changelog=parsed_json.get("changelog", ["Refactored and patched source code."]),

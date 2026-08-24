@@ -6,6 +6,8 @@ export default function ChatSidebar({
   onClose,
   initialContext,
   onClearContext,
+  fullCode,
+  report,
 }) {
   const [messages, setMessages] = useState([])
   const [inputValue, setInputValue] = useState('')
@@ -87,10 +89,13 @@ export default function ChatSidebar({
     }))
 
     try {
+      const activeSnippet = initialContext?.code_snippet || fullCode || undefined
+      const activeTitle = initialContext?.title || (report?.findings?.length ? `Analysis Overview (${report.summary?.total_findings} findings detected)` : undefined)
+
       const data = await sendChatMessage({
         message: query,
-        finding_title: initialContext?.title,
-        code_snippet: initialContext?.code_snippet,
+        finding_title: activeTitle,
+        code_snippet: activeSnippet,
         history: formattedHistory,
       })
 

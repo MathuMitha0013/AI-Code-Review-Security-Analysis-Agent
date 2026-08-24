@@ -401,6 +401,8 @@ export default function App() {
         onClose={() => setIsChatOpen(false)}
         initialContext={chatContext}
         onClearContext={handleClearChatContext}
+        fullCode={submittedCode}
+        report={report}
       />
 
       {/* Floating Chat Trigger Button */}
