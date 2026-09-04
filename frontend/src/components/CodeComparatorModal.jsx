@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import logoDark from '../assets/logo-dark.png'
 
 /**
  * Code Comparator Modal providing side-by-side comparison between
@@ -17,8 +18,12 @@ export default function CodeComparatorModal({
 
   if (!isOpen || !remediationData) return null
 
+  const rawRemediatedCode = remediationData.remediated_code || ''
+  const remediatedCode = typeof rawRemediatedCode === 'string' && rawRemediatedCode.includes('\\n')
+    ? rawRemediatedCode.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\t/g, '  ').replace(/\\"/g, '"')
+    : rawRemediatedCode
+
   const {
-    remediated_code: remediatedCode = '',
     changelog = [],
     original_score: originalScore = 100,
     projected_score: projectedScore = 100,
@@ -46,8 +51,8 @@ export default function CodeComparatorModal({
     URL.revokeObjectURL(url)
   }
 
-  const origLines = originalCode.split('\n')
-  const remLines = remediatedCode.split('\n')
+  const origLines = (originalCode || '').split('\n')
+  const remLines = (remediatedCode || '').split('\n')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
@@ -58,9 +63,11 @@ export default function CodeComparatorModal({
         {/* Modal Top Bar */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4 bg-[var(--color-bg-subtle)]">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white font-bold shadow-sm">
-              ⚡
-            </div>
+            <img
+              src={logoDark}
+              alt="Secoria Logo"
+              className="h-9 w-9 object-contain drop-shadow-[0_2px_12px_rgba(124,58,237,0.45)] transition-transform hover:scale-105"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)]">

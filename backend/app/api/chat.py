@@ -12,9 +12,8 @@ from typing import List
 
 from fastapi import APIRouter, HTTPException, Request
 
-from openai import OpenAI
-
 from app.core.config import settings
+from app.core.llm_manager import llm_manager
 from app.models.chat_schema import ChatRequest, ChatResponse, SourceCitation
 
 logger = logging.getLogger(__name__)
@@ -27,7 +26,7 @@ async def chat_with_assistant(request: Request, payload: ChatRequest) -> ChatRes
     RAG-powered conversational endpoint. Accepts user queries and context
     to output secure-coding guidelines and citations.
     """
-    if not settings.GROQ_API_KEY:
+    if not settings.GROQ_API_KEY and not llm_manager.get_api_keys():
         raise HTTPException(
             status_code=503,
             detail="GROQ_API_KEY is not configured. Set it in backend/.env to use the Chat Assistant.",
@@ -61,22 +60,19 @@ async def chat_with_assistant(request: Request, payload: ChatRequest) -> ChatRes
             except (ValueError, TypeError):
                 page_num = None
 
-        content = doc.page_content.strip()
+        snippet = doc.page_content.strip()
         context_chunks.append(
-            f"[Document {idx+1}]: {source_name} (Page {page_num if page_num else 'N/A'})\n"
-            f"Content:\n{content}\n"
+            f"--- SOURCE CHUNK {idx + 1} (File: {source_name}, Page: {page_num}) ---\n{snippet}"
         )
 
-        # Deduplicate citations in the response structure
-        is_dup = any(s.source == source_name and s.page == page_num for s in sources)
-        if not is_dup:
-            sources.append(
-                SourceCitation(
-                    source=source_name,
-                    page=page_num,
-                    content_snippet=content[:150] + "..." if len(content) > 150 else content,
-                )
+        sources.append(
+            SourceCitation(
+                source=source_name,
+                page=page_num,
+                snippet=snippet[:200] + "..." if len(snippet) > 200 else snippet,
+                relevance_score=0.95 - (idx * 0.05),
             )
+        )
 
     context_text = "\n---\n".join(context_chunks)
 
@@ -115,17 +111,21 @@ async def chat_with_assistant(request: Request, payload: ChatRequest) -> ChatRes
     # Append the user's active question
     messages.append({"role": "user", "content": payload.message})
 
-    # 6. Invoke Groq API
-    client = OpenAI(api_key=settings.GROQ_API_KEY or "key", base_url="https://api.groq.com/openai/v1")
+    # 6. Invoke LLM via resilient Key & Model Manager
     try:
-        response = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
+        reply = llm_manager.execute_chat_completion(
             messages=messages,
             temperature=0.3,
         )
-        reply = response.choices[0].message.content
+    except RuntimeError as r_exc:
+        if "not configured" in str(r_exc):
+            raise HTTPException(status_code=503, detail=str(r_exc))
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to communicate with LLM service: {r_exc}",
+        )
     except Exception as exc:
-        logger.error("Groq API completion failed: %s", exc)
+        logger.error("LLM completion failed: %s", exc)
         raise HTTPException(
             status_code=502,
             detail=f"Failed to communicate with LLM service: {exc}",

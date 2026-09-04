@@ -97,6 +97,42 @@ def analyze_java(code: str) -> SecurityScanReport:
                     node.position,
                 )
 
+        # Cross-Site Scripting (XSS): response.getWriter().write(...) / println with concatenation
+        if member in ("write", "print", "println") and node.arguments:
+            arg = node.arguments[0]
+            if isinstance(arg, javalang.tree.BinaryOperation) and arg.operator == "+":
+                add_finding(
+                    "CROSS_SITE_SCRIPTING_XSS", "A03:2021 - Injection",
+                    "Cross-Site Scripting (XSS) via Unescaped Output",
+                    "Writing dynamic string-concatenated content directly to the HTTP response stream "
+                    "can render unescaped user input as executable script in the victim's browser. "
+                    "Encode output using OWASP Java HTML encoder or use safe template engines.",
+                    node.position,
+                )
+
+        # CSRF Protection Disabled: http.csrf().disable()
+        if member == "disable" and (qualifier == "csrf" or "csrf()" in code):
+            add_finding(
+                "CSRF_PROTECTION_DISABLED", "A01:2021 - Broken Access Control",
+                "CSRF Protection Disabled in Security Configuration",
+                "Calling 'csrf().disable()' removes Cross-Site Request Forgery protections from Spring "
+                "Security. State-changing requests become vulnerable to unauthorized forgery from malicious sites.",
+                node.position,
+            )
+
+        # Insecure Cookie Attributes: setHttpOnly(false) or setSecure(false)
+        if member in ("setHttpOnly", "setSecure") and node.arguments:
+            arg = node.arguments[0]
+            if isinstance(arg, javalang.tree.Literal) and str(arg.value).lower() == "false":
+                flag_name = "HttpOnly" if member == "setHttpOnly" else "Secure"
+                add_finding(
+                    "INSECURE_COOKIE_ATTRIBUTES", "A07:2021 - Identification and Authentication Failures",
+                    f"Insecure Cookie Flag ({flag_name}=false)",
+                    f"Explicitly setting '{member}(false)' leaves cookies exposed to XSS script access or "
+                    f"unencrypted transmission over HTTP.",
+                    node.position,
+                )
+
     # --- Object creation: new Random(), new ObjectInputStream(...) ---
     for _, node in tree.filter(javalang.tree.ClassCreator):
         type_name = node.type.name if node.type else ""

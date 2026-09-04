@@ -13,13 +13,26 @@ WHY A SEPARATE FILE FOR THRESHOLDS INSTEAD OF INLINING THEM IN EACH ANALYZER?
 
 from app.models.analysis_schema import Severity
 
-# Each threshold list is ordered from most severe to least severe.
-# The first (metric, severity) pair whose condition is met wins.
-_LONG_METHOD_THRESHOLDS = [(50, "high"), (30, "medium"), (20, "low")]
-_TOO_MANY_PARAMS_THRESHOLDS = [(7, "high"), (5, "medium"), (4, "low")]
-_DEEP_NESTING_THRESHOLDS = [(5, "high"), (4, "medium"), (3, "low")]
-_LARGE_CLASS_THRESHOLDS = [(20, "critical"), (15, "high"), (10, "medium")]
-_CYCLOMATIC_COMPLEXITY_THRESHOLDS = [(20, "critical"), (10, "high"), (5, "medium")]
+# Thresholds updated to align with industry standards (SonarQube, PMD, ESLint):
+#
+#   Cyclomatic Complexity:
+#     SonarQube Critical = 30+, High = 15+, Medium = 10+   (we use slightly tighter)
+#     A freshly refactored method with CC=5 is clean code — should NOT be flagged.
+#
+#   Long Method:
+#     SonarQube flags at 35 lines (statements). 20 lines is too aggressive for helpers.
+#
+#   Too Many Parameters:
+#     SonarQube flags at 7. 4 params is perfectly normal (e.g., String, int, bool, enum).
+#
+#   Deep Nesting:
+#     2 levels (if inside for) is standard. 3 levels is a smell. 5+ is dangerous.
+#
+_LONG_METHOD_THRESHOLDS        = [(50, "high"), (35, "medium"), (25, "low")]
+_TOO_MANY_PARAMS_THRESHOLDS    = [(7,  "high"), (6,  "medium"), (5,  "low")]
+_DEEP_NESTING_THRESHOLDS       = [(5,  "high"), (4,  "medium"), (3,  "low")]
+_LARGE_CLASS_THRESHOLDS        = [(20, "critical"), (15, "high"), (10, "medium")]
+_CYCLOMATIC_COMPLEXITY_THRESHOLDS = [(20, "critical"), (15, "high"), (10, "medium")]
 
 
 def _score(value: int, thresholds: list[tuple[int, Severity]]) -> Severity | None:

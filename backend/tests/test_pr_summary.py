@@ -72,7 +72,7 @@ def test_pr_summary_success_with_mocked_groq(monkeypatch):
     mock_groq_response = MagicMock()
     mock_groq_response.choices = [MagicMock(message=MagicMock(content=mock_markdown))]
 
-    with patch("app.api.pr_summary.OpenAI") as MockOpenAI:
+    with patch("app.core.llm_manager.OpenAI") as MockOpenAI:
         mock_client_instance = MockOpenAI.return_value
         mock_client_instance.chat.completions.create.return_value = mock_groq_response
 
@@ -90,7 +90,7 @@ def test_pr_summary_api_failure_returns_502(monkeypatch):
 
     monkeypatch.setattr(settings, "GROQ_API_KEY", "fake-key-for-testing")
 
-    with patch("app.api.pr_summary.OpenAI") as MockOpenAI:
+    with patch("app.core.llm_manager.OpenAI") as MockOpenAI:
         mock_client_instance = MockOpenAI.return_value
         mock_client_instance.chat.completions.create.side_effect = Exception("Rate limit exceeded")
 

@@ -171,6 +171,75 @@ def test_java_clean_code_zero_findings():
     assert body["overall_severity"] == "low"
 
 
+def test_python_xss_render_template_string_detected():
+    code = "from flask import render_template_string\ndef view(user_input):\n    return render_template_string('<h1>Hello ' + user_input + '</h1>')\n"
+    body = _scan(code)
+    rule_ids = [f["rule_id"] for f in body["findings"]]
+    assert "CROSS_SITE_SCRIPTING_XSS" in rule_ids
+
+
+def test_python_csrf_exempt_detected():
+    code = "from django.views.decorators.csrf import csrf_exempt\n@csrf_exempt\ndef transfer_money(request):\n    pass\n"
+    body = _scan(code)
+    rule_ids = [f["rule_id"] for f in body["findings"]]
+    assert "CSRF_PROTECTION_DISABLED" in rule_ids
+
+
+def test_python_insecure_cookie_detected():
+    code = "def set_user_cookie(response):\n    response.set_cookie('session_id', '12345', httponly=False, secure=False)\n"
+    body = _scan(code)
+    rule_ids = [f["rule_id"] for f in body["findings"]]
+    assert "INSECURE_COOKIE_ATTRIBUTES" in rule_ids
+
+
+def test_python_broken_access_control_detected():
+    code = "@app.route('/admin/delete_user', methods=['POST'])\ndef delete_user():\n    pass\n"
+    body = _scan(code)
+    rule_ids = [f["rule_id"] for f in body["findings"]]
+    assert "BROKEN_ACCESS_CONTROL_MISSING_AUTH" in rule_ids
+
+
+def test_java_xss_detected():
+    code = (
+        "import javax.servlet.http.HttpServletResponse;\n"
+        "public class Main {\n"
+        "    public void serve(HttpServletResponse response, String user) throws Exception {\n"
+        '        response.getWriter().write("<div>Hello " + user + "</div>");\n'
+        "    }\n"
+        "}\n"
+    )
+    body = _scan(code)
+    rule_ids = [f["rule_id"] for f in body["findings"]]
+    assert "CROSS_SITE_SCRIPTING_XSS" in rule_ids
+
+
+def test_java_csrf_disabled_detected():
+    code = (
+        "public class SecurityConfig {\n"
+        "    public void configure(org.springframework.security.config.annotation.web.builders.HttpSecurity http) throws Exception {\n"
+        "        http.csrf().disable();\n"
+        "    }\n"
+        "}\n"
+    )
+    body = _scan(code)
+    rule_ids = [f["rule_id"] for f in body["findings"]]
+    assert "CSRF_PROTECTION_DISABLED" in rule_ids
+
+
+def test_java_insecure_cookie_detected():
+    code = (
+        "import javax.servlet.http.Cookie;\n"
+        "public class CookieHelper {\n"
+        "    public void makeCookie(Cookie cookie) {\n"
+        "        cookie.setHttpOnly(false);\n"
+        "    }\n"
+        "}\n"
+    )
+    body = _scan(code)
+    rule_ids = [f["rule_id"] for f in body["findings"]]
+    assert "INSECURE_COOKIE_ATTRIBUTES" in rule_ids
+
+
 def test_scan_invalid_syntax_returns_422():
     response = client.post("/api/security-scan", data={"code": "def foo(:\n"})
     assert response.status_code == 422
@@ -179,3 +248,4 @@ def test_scan_invalid_syntax_returns_422():
 def test_scan_no_input_returns_400():
     response = client.post("/api/security-scan", data={})
     assert response.status_code == 400
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import ThemeToggle from './ThemeToggle'
 import logoDark from '../assets/logo-dark.png'
 
@@ -120,12 +120,12 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
       <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur-md shadow-xs">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-4">
-            {/* Vibrant Blue 3D Logo & Title */}
+            {/* Vibrant Violet Logo & Title */}
             <div className="flex items-center gap-3">
               <img
                 src={logoDark}
                 alt="Secoria Logo"
-                className="h-9 w-auto drop-shadow-[0_2px_12px_rgba(99,102,241,0.35)] transition-transform hover:scale-105"
+                className="h-9 w-auto drop-shadow-[0_2px_14px_rgba(124,58,237,0.45)] transition-transform hover:scale-105"
               />
               <div className="flex items-baseline gap-2.5">
                 <span className="text-xl font-black tracking-widest text-[var(--color-text-primary)] font-brand">
@@ -165,8 +165,8 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
       {/* 2. Hero Section */}
       <section className="relative overflow-hidden pt-10 pb-20 md:pt-16 md:pb-28">
         {/* Radiant Ambient Glows */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-indigo-500/15 via-purple-500/10 to-transparent blur-[120px] rounded-full pointer-events-none -z-10" />
-        <div className="absolute top-1/3 left-1/4 w-[350px] h-[250px] bg-sky-400/10 blur-[90px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-purple-500/20 via-indigo-500/10 to-transparent blur-[120px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-1/3 left-1/4 w-[350px] h-[250px] bg-purple-400/15 blur-[90px] rounded-full pointer-events-none -z-10" />
 
         <div className="mx-auto max-w-7xl px-6 text-center">
           {/* Platform Tag */}
@@ -175,14 +175,14 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
             <span>⚡ Automated Multi-Agent Code Audit Platform</span>
           </div>
 
-          {/* Prominent Blue 3D Logo Centerpiece */}
+          {/* Prominent Violet Logo Centerpiece */}
           <div className="flex justify-center mb-4">
             <div className="relative group">
-              <div className="absolute inset-0 bg-indigo-500/25 blur-3xl rounded-full opacity-70 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-purple-500/30 blur-3xl rounded-full opacity-70 group-hover:opacity-100 transition-opacity" />
               <img
                 src={logoDark}
-                alt="Secoria Shield"
-                className="relative h-24 sm:h-32 md:h-40 w-auto drop-shadow-[0_14px_36px_rgba(99,102,241,0.45)] transition-transform duration-300 hover:scale-105"
+                alt="Secoria Logo"
+                className="relative h-24 sm:h-32 md:h-40 w-auto drop-shadow-[0_14px_40px_rgba(124,58,237,0.5)] transition-transform duration-300 hover:scale-105"
               />
             </div>
           </div>

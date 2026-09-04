@@ -306,12 +306,11 @@ function MultiAgentGraphFlow({ language, summary }) {
  * Main Visual Analytics Component
  */
 export default function VisualAnalytics({ report, onSelectCategory, selectedCategory, onSelectSeverity, selectedSeverity }) {
-  if (!report) return null
-
-  const { summary, findings = [], language } = report
+  const summary = report?.summary
 
   // Compute breakdown by category
   const categoryData = useMemo(() => {
+    const findings = report?.findings || []
     const map = {}
     findings.forEach((f) => {
       const cat = f.category || 'General Quality'
@@ -320,9 +319,11 @@ export default function VisualAnalytics({ report, onSelectCategory, selectedCate
     return Object.entries(map)
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count)
-  }, [findings])
+  }, [report?.findings])
 
-  const totalFindings = summary?.total_findings ?? findings.length
+  if (!report) return null
+
+  const totalFindings = summary?.total_findings ?? (report?.findings?.length || 0)
 
   return (
     <div className="space-y-6 animate-fadeIn">

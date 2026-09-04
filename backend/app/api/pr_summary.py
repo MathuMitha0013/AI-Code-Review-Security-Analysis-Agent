@@ -92,17 +92,22 @@ async def generate_pr_summary(report: UnifiedReviewReport) -> PRSummaryResponse:
         f"{findings_text}\n"
     )
 
-    client = OpenAI(api_key=settings.GROQ_API_KEY or "key", base_url="https://api.groq.com/openai/v1")
+    # 3. Call LLM via resilient Key & Model Manager
     try:
-        response = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
+        markdown_result = llm_manager.execute_chat_completion(
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": prompt_body},
             ],
             temperature=0.2,
         )
-        markdown_result = response.choices[0].message.content
+    except RuntimeError as r_exc:
+        if "not configured" in str(r_exc):
+            raise HTTPException(status_code=503, detail=str(r_exc))
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to communicate with LLM service: {r_exc}",
+        )
     except Exception as exc:
         logger.error("LLM call failed during PR summary generation: %s", exc)
         raise HTTPException(

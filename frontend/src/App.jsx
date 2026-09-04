@@ -5,9 +5,9 @@ import FindingsDashboard from './components/FindingsDashboard'
 import ChatSidebar from './components/ChatSidebar'
 import ThemeToggle from './components/ThemeToggle'
 import LandingPage from './components/LandingPage'
+import GitHubPRModal from './components/GitHubPRModal'
 import { runReview } from './services/api'
 import logoDark from './assets/logo-dark.png'
-import logoLight from './assets/logo-light.png'
 
 /**
  * Pre-configured Demo Samples for quick mentor evaluation.
@@ -173,6 +173,9 @@ export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatContext, setChatContext] = useState(null)
 
+  // GitHub PR Bot Modal State
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
+
   const canSubmit = mode === 'paste' ? code.trim().length > 0 : file !== null
   const hasResults = isReviewing || report !== null || reviewError !== null
 
@@ -252,14 +255,22 @@ export default function App() {
   }
 
   const handleApplyCleanCode = async (cleanCode) => {
-    setCode(cleanCode)
+    let unescapedCode = typeof cleanCode === 'string' ? cleanCode : ''
+    if (unescapedCode.includes('\\n')) {
+      unescapedCode = unescapedCode
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '  ')
+        .replace(/\\"/g, '"')
+    }
+    setCode(unescapedCode)
     setMode('paste')
     setFile(null)
-    setSubmittedCode(cleanCode)
+    setSubmittedCode(unescapedCode)
     setIsReviewing(true)
     setReviewError(null)
     try {
-      const data = await runReview({ code: cleanCode })
+      const data = await runReview({ code: unescapedCode })
       setReport(data)
     } catch (err) {
       setReviewError(err.message || 'Review failed.')
@@ -299,7 +310,7 @@ export default function App() {
               <img
                 src={logoDark}
                 alt="Secoria Logo"
-                className="h-8 w-auto drop-shadow-[0_2px_10px_rgba(99,102,241,0.3)] transition-transform hover:scale-105"
+                className="h-8 w-auto drop-shadow-[0_2px_12px_rgba(124,58,237,0.45)] transition-transform hover:scale-105"
               />
               <div className="flex items-baseline gap-2.5">
                 <span className="text-base font-black tracking-widest text-[var(--color-text-primary)] font-brand">SECORIA</span>
@@ -309,7 +320,20 @@ export default function App() {
               </div>
             </div>
           </div>
-          <ThemeToggle />
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsGitHubModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50 shadow-xs transition-all cursor-pointer"
+              title="Inspect GitHub Pull Requests or Git Diffs"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              <span>GitHub PR Bot</span>
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -403,6 +427,18 @@ export default function App() {
         onClearContext={handleClearChatContext}
         fullCode={submittedCode}
         report={report}
+      />
+
+      {/* GitHub PR Review & CI/CD Modal */}
+      <GitHubPRModal
+        isOpen={isGitHubModalOpen}
+        onClose={() => setIsGitHubModalOpen(false)}
+        onLoadCodeToEditor={(diffCode, lang) => {
+          setCode(diffCode)
+          setMode('paste')
+          setFile(null)
+          setSubmittedCode(diffCode)
+        }}
       />
 
       {/* Floating Chat Trigger Button */}

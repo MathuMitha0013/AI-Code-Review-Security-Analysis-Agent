@@ -126,7 +126,8 @@ def _merge_findings(code_findings, security_findings) -> tuple[list[UnifiedFindi
     duplicates_removed = 0
 
     for finding in code_findings:
-        key = (finding.rule, finding.line)
+        title = finding.rule.replace("_", " ").title()
+        key = (title.lower().strip(), finding.line)
         if key in seen:
             duplicates_removed += 1
             continue
@@ -134,7 +135,7 @@ def _merge_findings(code_findings, security_findings) -> tuple[list[UnifiedFindi
         merged.append(UnifiedFinding(
             source_agent="code_analysis",
             category=finding.category,
-            title=finding.rule.replace("_", " ").title(),
+            title=title,
             description=finding.message,
             severity=finding.severity,
             line=finding.line,
@@ -142,7 +143,7 @@ def _merge_findings(code_findings, security_findings) -> tuple[list[UnifiedFindi
         ))
 
     for finding in security_findings:
-        key = (finding.title, finding.line)
+        key = (finding.title.lower().strip(), finding.line)
         if key in seen:
             duplicates_removed += 1
             continue

@@ -59,7 +59,7 @@ def test_chat_success_with_mocked_rag_and_groq(monkeypatch):
     mock_groq_response = MagicMock()
     mock_groq_response.choices = [MagicMock(message=MagicMock(content=mock_reply))]
 
-    with patch("app.api.chat.OpenAI") as MockOpenAI:
+    with patch("app.core.llm_manager.OpenAI") as MockOpenAI:
         mock_client_instance = MockOpenAI.return_value
         mock_client_instance.chat.completions.create.return_value = mock_groq_response
 
@@ -83,7 +83,7 @@ def test_chat_groq_failure_returns_502(monkeypatch):
     mock_vector_store.similarity_search.return_value = []
     app.state.vector_store = mock_vector_store
 
-    with patch("app.api.chat.OpenAI") as MockOpenAI:
+    with patch("app.core.llm_manager.OpenAI") as MockOpenAI:
         mock_client_instance = MockOpenAI.return_value
         mock_client_instance.chat.completions.create.side_effect = Exception("Service unavailable")
 

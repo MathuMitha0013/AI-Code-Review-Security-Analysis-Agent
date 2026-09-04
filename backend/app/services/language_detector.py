@@ -26,8 +26,8 @@ _EXTENSION_MAP: dict[str, SupportedLanguage] = {
 # These are intentionally simple keyword/pattern checks — NOT a full
 # language classifier. Good enough for Milestone 1; a mentor question
 # about this is answered below.
-_PYTHON_SIGNALS = ("def ", "import ", "print(", "elif ", "self.")
-_JAVA_SIGNALS = ("public class", "public static void main", "System.out.println", "private ")
+_PYTHON_SIGNALS = ("def ", "elif ", "self.", "import ", "from ", "print(", "class ", "__init__", "lambda ", ":\n")
+_JAVA_SIGNALS = ("public class", "public static void main", "System.out.println", "private ", "public ", "protected ", "void ", "throws ", "package ", "extends ", "implements ", "import java", "import javax")
 
 
 def detect_language(code: str, filename: str | None = None) -> SupportedLanguage:
@@ -47,7 +47,7 @@ def detect_language(code: str, filename: str | None = None) -> SupportedLanguage
                 logger.info("Language detected via file extension: %s -> %s", filename, lang)
                 return lang
 
-    # No filename or unrecognized extension -> fall back to content heuristics.
+    # No filename or unrecognized extension -> check content heuristics.
     python_score = sum(signal in code for signal in _PYTHON_SIGNALS)
     java_score = sum(signal in code for signal in _JAVA_SIGNALS)
 
@@ -55,11 +55,34 @@ def detect_language(code: str, filename: str | None = None) -> SupportedLanguage
         logger.warning("Could not detect language from content heuristics.")
         return "unknown"
 
-    detected: SupportedLanguage = "python" if python_score >= java_score else "java"
+    detected: SupportedLanguage = "java" if java_score > python_score else "python"
+
+    # AST-based verification to prevent false misclassification on close scores
+    import ast
+    import javalang
+    try:
+        ast.parse(code)
+        is_valid_py = True
+    except Exception:
+        is_valid_py = False
+
+    try:
+        javalang.parse.parse(code)
+        is_valid_java = True
+    except Exception:
+        is_valid_java = False
+
+    if is_valid_py and not is_valid_java:
+        detected = "python"
+    elif is_valid_java and not is_valid_py:
+        detected = "java"
+
     logger.info(
-        "Language detected via heuristics (python_score=%d, java_score=%d) -> %s",
+        "Language detected (python_score=%d, java_score=%d, valid_py=%s, valid_java=%s) -> %s",
         python_score,
         java_score,
+        is_valid_py,
+        is_valid_java,
         detected,
     )
     return detected

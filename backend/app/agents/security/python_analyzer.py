@@ -23,7 +23,10 @@ from app.agents.security.severity import compute_overall_severity
 # Variable/field names that suggest a hardcoded secret when assigned a
 # string literal. Intentionally broad -- false positives here are far
 # cheaper than false negatives for a security scanner.
-_SECRET_NAME_PATTERN = re.compile(r"(password|secret|api[_-]?key|token|passwd|credential)", re.IGNORECASE)
+_SECRET_NAME_PATTERN = re.compile(
+    r"(password|secret|api[_-]?key|token|passwd|credential|private[_-]?key|bearer|auth[_-]?token|jwt[_-]?secret|access[_-]?token|client[_-]?secret)",
+    re.IGNORECASE,
+)
 
 
 def _get_line_snippet(code_lines: list[str], lineno: int | None) -> str | None:
@@ -159,6 +162,94 @@ def analyze_python(code: str) -> SecurityScanReport:
                     "A query string built with '+' concatenation or an f-string, then passed to "
                     "'.execute()', allows attacker-controlled input to alter the query's structure. "
                     "Use parameterized queries: 'cursor.execute(query, (param,))' instead.",
+                    node,
+                )
+
+        # --- Cross-Site Scripting (XSS): render_template_string / mark_safe / Markup ---
+        if isinstance(node, ast.Call):
+            func_name = None
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                func_name = node.func.attr
+
+            if func_name in ("render_template_string", "mark_safe", "Markup") and node.args:
+                arg = node.args[0]
+                if isinstance(arg, (ast.BinOp, ast.JoinedStr, ast.Name, ast.Call)):
+                    add_finding(
+                        "CROSS_SITE_SCRIPTING_XSS", "A03:2021 - Injection",
+                        f"Cross-Site Scripting (XSS) via {func_name}()",
+                        f"Passing dynamically formatted or unescaped strings to '{func_name}()' can render "
+                        f"untrusted user input as executable HTML/JavaScript in the browser. "
+                        f"Use safe template rendering (render_template) or explicit HTML entity escaping.",
+                        node,
+                    )
+
+        # --- CSRF Protection Disabled: @csrf_exempt decorator ---
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            for decorator in node.decorator_list:
+                dec_name = None
+                if isinstance(decorator, ast.Name):
+                    dec_name = decorator.id
+                elif isinstance(decorator, ast.Attribute):
+                    dec_name = decorator.attr
+                if dec_name == "csrf_exempt":
+                    add_finding(
+                        "CSRF_PROTECTION_DISABLED", "A01:2021 - Broken Access Control",
+                        "CSRF Protection Disabled (@csrf_exempt)",
+                        f"Function '{node.name}' uses the '@csrf_exempt' decorator, disabling CSRF token "
+                        f"validation. State-changing endpoints without CSRF protection allow attackers "
+                        f"to perform unauthorized actions on behalf of authenticated users.",
+                        node,
+                    )
+
+        # --- Insecure Cookie Configuration: httponly=False or secure=False ---
+        if isinstance(node, ast.Call):
+            is_cookie_call = False
+            if isinstance(node.func, ast.Attribute) and node.func.attr == "set_cookie":
+                is_cookie_call = True
+            elif isinstance(node.func, ast.Name) and node.func.id == "set_cookie":
+                is_cookie_call = True
+
+            if is_cookie_call:
+                insecure_flags = []
+                for kw in node.keywords:
+                    if kw.arg == "httponly" and isinstance(kw.value, ast.Constant) and kw.value.value is False:
+                        insecure_flags.append("httponly=False")
+                    if kw.arg == "secure" and isinstance(kw.value, ast.Constant) and kw.value.value is False:
+                        insecure_flags.append("secure=False")
+                    if kw.arg == "samesite" and isinstance(kw.value, ast.Constant) and str(kw.value.value).lower() in ("none", "none"):
+                        insecure_flags.append("samesite='None'")
+                if insecure_flags:
+                    add_finding(
+                        "INSECURE_COOKIE_ATTRIBUTES", "A07:2021 - Identification and Authentication Failures",
+                        "Insecure Cookie Configuration",
+                        f"Cookie is configured with insecure flag(s): {', '.join(insecure_flags)}. "
+                        f"Cookies without 'httponly=True' can be stolen via XSS, and cookies without "
+                        f"'secure=True' can be intercepted over unencrypted HTTP.",
+                        node,
+                    )
+
+        # --- Broken Access Control: Sensitive Route Missing Authentication ---
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            has_route_decorator = False
+            is_sensitive_path = False
+            has_auth_check = False
+            for dec in node.decorator_list:
+                dec_str = ast.dump(dec)
+                if any(r in dec_str for r in ("route", "get", "post", "put", "delete")):
+                    has_route_decorator = True
+                    if any(p in dec_str.lower() for p in ("/admin", "/delete", "/update", "/role", "/permission")):
+                        is_sensitive_path = True
+                if any(a in dec_str.lower() for a in ("login_required", "auth", "permission_required", "depends", "roles_accepted")):
+                    has_auth_check = True
+
+            if has_route_decorator and is_sensitive_path and not has_auth_check:
+                add_finding(
+                    "BROKEN_ACCESS_CONTROL_MISSING_AUTH", "A01:2021 - Broken Access Control",
+                    f"Sensitive Endpoint Missing Access Control in '{node.name}'",
+                    f"Endpoint '{node.name}' handles a privileged administrative path but lacks an explicit "
+                    f"authentication/authorization guard (e.g. @login_required, Depends, or permission checks).",
                     node,
                 )
 

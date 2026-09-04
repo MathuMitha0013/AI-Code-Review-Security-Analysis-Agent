@@ -20,15 +20,13 @@ logger = logging.getLogger(__name__)
 
 _GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 
-# Ordered list of models to try for resilience
-_MODEL_CASCADE = [
-    settings.GROQ_MODEL,
+_DEFAULT_MODELS = [
+    "qwen/qwen3.6-27b",
+    "qwen/qwen3.8-27b",
     "openai/gpt-oss-20b",
     "openai/gpt-oss-120b",
-    "qwen/qwen3.6-27b",
     "groq/compound",
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
+    "groq/compound-mini",
 ]
 
 
@@ -54,6 +52,15 @@ class LLMKeyManager:
 
         return keys
 
+    def get_models(self) -> List[str]:
+        """Returns deduplicated list of active candidate models."""
+        primary = getattr(settings, "GROQ_MODEL", "")
+        models = [primary] if primary else []
+        for m in _DEFAULT_MODELS:
+            if m not in models:
+                models.append(m)
+        return models
+
     def execute_chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -71,6 +78,7 @@ class LLMKeyManager:
                 "GROQ_API_KEY is not configured. Add one or more keys to backend/.env."
             )
 
+        models = self.get_models()
         last_error = None
 
         # Try across all keys
@@ -87,7 +95,7 @@ class LLMKeyManager:
             )
 
             # Try models in cascade
-            for model_name in _MODEL_CASCADE:
+            for model_name in models:
                 try:
                     logger.info("Attempting LLM call with Key %s on model '%s'", masked_key, model_name)
 
@@ -122,14 +130,10 @@ class LLMKeyManager:
                         model_name,
                         err_str,
                     )
-
-                    # If rate limit or quota exceeded, break model loop to switch key immediately
-                    if "429" in err_str or "rate limit" in err_str.lower() or "quota" in err_str.lower():
-                        logger.info("Key %s rate limited. Switching to next API key...", masked_key)
-                        break
+                    # Continue to next model in cascade
 
         # If all keys and models failed, raise clear aggregated error
-        raise RuntimeError(f"All configured LLM API keys exhausted or timed out: {last_error}")
+        raise RuntimeError(f"All configured LLM API keys/models exhausted or timed out: {last_error}")
 
 
 llm_manager = LLMKeyManager()

@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.analysis import router as analysis_router
 from app.api.chat import router as chat_router
+from app.api.github_webhook import router as github_router
 from app.api.orchestration import router as orchestration_router
 from app.api.pr_summary import router as pr_summary_router
 from app.api.report import router as report_router
@@ -41,14 +42,14 @@ async def lifespan(_app: FastAPI):
 
     import asyncio
 
-    async def _async_init_rag():
+    def _sync_init_rag():
         try:
             from langchain_huggingface import HuggingFaceEmbeddings
             from langchain_chroma import Chroma
             import chromadb
             from chromadb.config import Settings as ChromaSettings
 
-            logger.info("Initializing ChromaDB connection in background...")
+            logger.info("Initializing ChromaDB connection in background thread...")
             embedding_function = HuggingFaceEmbeddings(
                 model_name="sentence-transformers/all-MiniLM-L6-v2",
                 model_kwargs={"device": "cpu"},
@@ -67,7 +68,7 @@ async def lifespan(_app: FastAPI):
         except Exception as exc:
             logger.warning("Background ChromaDB init notice: %s", exc)
 
-    asyncio.create_task(_async_init_rag())
+    asyncio.create_task(asyncio.to_thread(_sync_init_rag))
     yield
     logger.info("%s shutting down.", settings.APP_NAME)
 
@@ -76,9 +77,10 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description=(
-        "Secoria API — Milestone 1: Code Submission Module. "
-        "Detects programming language and validates syntax for pasted or "
-        "uploaded Python/Java code."
+        "Secoria API — Multi-Agent AI Code Review & Security Analysis Platform. "
+        "Automated code smell detection, OWASP Top 10 security scanning, "
+        "AI-powered remediation with auto-patching, PR summary generation, "
+        "and RAG-grounded conversational code assistance."
     ),
     lifespan=lifespan,
 )
@@ -103,6 +105,7 @@ app.include_router(remediation_router)
 app.include_router(chat_router)
 app.include_router(pr_summary_router)
 app.include_router(report_router)
+app.include_router(github_router)
 
 
 @app.get("/health", tags=["health"])

@@ -285,4 +285,39 @@ export async function autoRemediateAll({ full_code, language, findings, health_s
   return response.json()
 }
 
+/**
+ * Simulates or executes a GitHub Pull Request review from PR URL or raw Git diff patch.
+ *
+ * @param {{
+ *   pr_url?: string,
+ *   diff_patch?: string,
+ *   github_token?: string,
+ *   post_to_github?: boolean
+ * }} params
+ */
+export async function simulatePRReview({ pr_url, diff_patch, github_token, post_to_github = false }) {
+  const response = await fetch(`${API_BASE_URL}/api/github/simulate-pr-review`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      pr_url: pr_url || null,
+      diff_patch: diff_patch || null,
+      github_token: github_token || null,
+      post_to_github,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(
+      errorBody.detail || `GitHub PR review failed with status ${response.status}`
+    )
+  }
+
+  return response.json()
+}
+
+
 
