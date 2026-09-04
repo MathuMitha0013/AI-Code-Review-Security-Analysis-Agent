@@ -163,8 +163,9 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
 
     setIsAutoRemediating(true)
     try {
+      const codeToRemediate = fullCode || report?.submitted_code || report?.code || ''
       const res = await autoRemediateAll({
-        full_code: fullCode,
+        full_code: codeToRemediate,
         language: report.language,
         findings: report.findings,
         health_score: report.health_score || 100,

@@ -76,6 +76,7 @@ class MultiProviderLLMManager:
         temperature: float = 0.2,
         response_format: Optional[Dict[str, str]] = None,
         timeout: float = 25.0,
+        max_tokens: int = 2048,
     ) -> Optional[str]:
         """Executes LLM completion via Google Gemini."""
         gemini_key = getattr(settings, "GEMINI_API_KEY", "").strip()
@@ -97,7 +98,7 @@ class MultiProviderLLMManager:
                     "model": model_name,
                     "messages": messages,
                     "temperature": temperature,
-                    "max_tokens": 800,
+                    "max_tokens": max_tokens,
                 }
                 if response_format:
                     kwargs["response_format"] = response_format
@@ -118,6 +119,7 @@ class MultiProviderLLMManager:
         temperature: float = 0.2,
         response_format: Optional[Dict[str, str]] = None,
         timeout: float = 35.0,
+        max_tokens: int = 2048,
     ) -> Optional[str]:
         """Executes LLM completion via Groq Cloud with key rotation and model cascade."""
         keys = self.get_groq_keys()
@@ -149,7 +151,7 @@ class MultiProviderLLMManager:
                         "model": model_name,
                         "messages": messages,
                         "temperature": temperature,
-                        "max_tokens": 800,
+                        "max_tokens": max_tokens,
                     }
                     if response_format:
                         kwargs["response_format"] = response_format
@@ -181,6 +183,7 @@ class MultiProviderLLMManager:
         temperature: float = 0.2,
         response_format: Optional[Dict[str, str]] = None,
         timeout: float = 45.0,
+        max_tokens: int = 2048,
     ) -> Optional[str]:
         """Executes LLM completion via Local Ollama offline instance."""
         ollama_base = getattr(settings, "OLLAMA_BASE_URL", "http://localhost:11434/v1")
@@ -199,6 +202,7 @@ class MultiProviderLLMManager:
                     "model": model_name,
                     "messages": messages,
                     "temperature": temperature,
+                    "max_tokens": max_tokens,
                 }
                 if response_format:
                     kwargs["response_format"] = response_format
@@ -219,6 +223,7 @@ class MultiProviderLLMManager:
         temperature: float = 0.2,
         response_format: Optional[Dict[str, str]] = None,
         timeout: float = 8.0,
+        max_tokens: int = 2048,
     ) -> str:
         """
         Executes chat completion with Multi-Provider Fallback Chain:
@@ -237,15 +242,15 @@ class MultiProviderLLMManager:
         for provider in providers:
             try:
                 if provider == "gemini":
-                    res = self._call_gemini(messages, temperature, response_format, timeout=timeout)
+                    res = self._call_gemini(messages, temperature, response_format, timeout=timeout, max_tokens=max_tokens)
                     if res:
                         return res
                 elif provider == "groq":
-                    res = self._call_groq(messages, temperature, response_format, timeout=timeout)
+                    res = self._call_groq(messages, temperature, response_format, timeout=timeout, max_tokens=max_tokens)
                     if res:
                         return res
                 elif provider == "ollama":
-                    res = self._call_ollama(messages, temperature, response_format, timeout=timeout)
+                    res = self._call_ollama(messages, temperature, response_format, timeout=timeout, max_tokens=max_tokens)
                     if res:
                         return res
             except Exception as e:

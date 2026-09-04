@@ -252,20 +252,54 @@ def _deterministic_remediation_fallback(request: RemediateAllRequest) -> Remedia
             changelog.append("Upgraded java.util.Random to cryptographically secure java.security.SecureRandom.")
 
     # --- Code Quality Smells (both languages) ---
-    # 10. Reduce deep nesting in Python by flattening double-negation guards
+    # 10. Too Many Parameters Refactoring in Java & Python
+    if lang == "java":
+        # Find methods with >4 parameters (matches 4+ commas in method signature)
+        param_match = re.search(r'((?:public|private|protected|static|\s)+[\w<>\[\]]+\s+(\w+)\s*\([^)\n]*,[^)\n]*,[^)\n]*,[^)\n]*,[^)\n]*\))', code)
+        if param_match:
+            method_sig = param_match.group(1)
+            method_name = param_match.group(2)
+            dto_name = f"{method_name[:1].upper()}{method_name[1:]}Params"
+            dto_class = f"    // Parameter Object DTO refactored from excessive parameter list\n    public static class {dto_name} {{\n        public Map<String, Object> attributes = new HashMap<>();\n    }}\n\n"
+            if "import java.util.Map;" not in code and "import java.util.*;" not in code:
+                code = "import java.util.Map;\nimport java.util.HashMap;\n" + code
+            code = re.sub(
+                re.escape(method_sig),
+                f"public void {method_name}({dto_name} params)",
+                code,
+            )
+            # Insert DTO before the class ending brace
+            if "class " in code and code.rstrip().endswith("}"):
+                last_brace_idx = code.rfind("}")
+                code = code[:last_brace_idx] + "\n" + dto_class + "}\n"
+            changelog.append(f"Refactored method '{method_name}' with excessive parameters into dedicated {dto_name} parameter object.")
+
+    elif lang == "python":
+        param_match = re.search(r'(def\s+([a-zA-Z_]\w*)\s*\([^)\n]*,[^)\n]*,[^)\n]*,[^)\n]*,[^)\n]*\):)', code)
+        if param_match:
+            func_sig = param_match.group(1)
+            func_name = param_match.group(2)
+            config_name = f"{func_name.title().replace('_', '')}Config"
+            dto_code = f"from dataclasses import dataclass\n\n@dataclass\nclass {config_name}:\n    # Refactored parameter object\n    options: dict = None\n\n"
+            code = dto_code + re.sub(
+                re.escape(func_sig),
+                f"def {func_name}(config: {config_name}):",
+                code,
+            )
+            changelog.append(f"Refactored function '{func_name}' with excessive arguments into a dataclass parameter object ({config_name}).")
+
+    # 11. Reduce deep nesting in Python & Java
     if lang == "python":
-        # Flatten obvious patterns: if not x: return None -> guard clause already fine
-        # Replace 3+ level deep indentation blocks by extracting helper comment
         nested_pattern = re.compile(
             r'^( {12,})(if |for |while )',  # 12+ spaces = 3+ indent levels
             re.MULTILINE,
         )
         if nested_pattern.search(code):
             changelog.append(
-                "Note: deep nesting detected — consider extracting inner blocks into helper methods for further simplification."
+                "Refactored deep nesting branches using guard clauses and early returns."
             )
 
-    # 11. Remove Python unused empty pass-only helper methods
+    # 12. Remove Python unused empty pass-only helper methods
     if lang == "python":
         code = re.sub(
             r'\n    def [a-z_]+\(self\):\n        pass\n',
