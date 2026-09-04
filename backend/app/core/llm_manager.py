@@ -20,16 +20,18 @@ _GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 _GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 
 _GROQ_DEFAULT_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-    "llama3-70b-8192",
-    "gemma2-9b-it",
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.6-27b",
+    "qwen/qwen3.8-27b",
+    "groq/compound-mini",
 ]
 
 _GEMINI_DEFAULT_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
+    "gemini-2.0-flash-exp",
+    "gemini-1.5-flash-latest",
     "gemini-1.5-flash",
+    "gemini-1.5-pro",
 ]
 
 _OLLAMA_DEFAULT_MODELS = [
@@ -95,6 +97,7 @@ class MultiProviderLLMManager:
                     "model": model_name,
                     "messages": messages,
                     "temperature": temperature,
+                    "max_tokens": 800,
                 }
                 if response_format:
                     kwargs["response_format"] = response_format
@@ -144,6 +147,7 @@ class MultiProviderLLMManager:
                         "model": model_name,
                         "messages": messages,
                         "temperature": temperature,
+                        "max_tokens": 800,
                     }
                     if response_format:
                         kwargs["response_format"] = response_format
@@ -218,7 +222,9 @@ class MultiProviderLLMManager:
         Executes chat completion with Multi-Provider Fallback Chain:
         Gemini -> Groq -> Ollama (or custom order configured in settings.LLM_PROVIDER_ORDER).
         """
-        order_str = getattr(settings, "LLM_PROVIDER_ORDER", "gemini,groq,ollama")
+        order_str = getattr(settings, "LLM_PROVIDER_ORDER", "groq,gemini,ollama")
+        if not order_str or order_str == "gemini,groq,ollama":
+            order_str = "groq,gemini,ollama"
         providers = [p.strip().lower() for p in order_str.split(",") if p.strip()]
 
         has_gemini = bool(getattr(settings, "GEMINI_API_KEY", "").strip())

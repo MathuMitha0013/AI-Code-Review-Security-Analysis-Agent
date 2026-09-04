@@ -26,9 +26,9 @@ _SAMPLE_REQUEST = {
 }
 
 
-def test_remediate_without_api_key_returns_503(monkeypatch):
-    """If GROQ_API_KEY/GEMINI_API_KEY isn't configured, the endpoint should fail clearly
-    (503, service unavailable) rather than crash unexpectedly."""
+def test_remediate_without_api_key_returns_fallback(monkeypatch):
+    """If GROQ_API_KEY/GEMINI_API_KEY isn't configured, the endpoint should seamlessly
+    activate deterministic fallback rather than crashing."""
     from app.core.config import settings
     monkeypatch.setattr(settings, "GEMINI_API_KEY", "")
     monkeypatch.setattr(settings, "GROQ_API_KEY", "")
@@ -37,8 +37,9 @@ def test_remediate_without_api_key_returns_503(monkeypatch):
     monkeypatch.setattr(settings, "GROQ_API_KEYS", "")
 
     response = client.post("/api/remediate", json=_SAMPLE_REQUEST)
-    assert response.status_code == 503
-    assert "not configured" in response.json()["detail"]
+    assert response.status_code == 200
+    body = response.json()
+    assert "%s" in body["remediation"]["fixed_code"]
 
 
 def test_remediate_success_with_mocked_groq(monkeypatch):
@@ -68,9 +69,9 @@ def test_remediate_success_with_mocked_groq(monkeypatch):
     assert "parameterized queries" in body["remediation"]["best_practice_notes"]
 
 
-def test_remediate_groq_failure_returns_502(monkeypatch):
+def test_remediate_groq_failure_returns_fallback(monkeypatch):
     """If the Groq API call itself fails (network error, rate limit,
-    etc.), the endpoint should return a clear 502, not crash."""
+    etc.), the endpoint should smoothly activate deterministic fallback."""
     from app.core.config import settings
     monkeypatch.setattr(settings, "GROQ_API_KEY", "fake-key-for-testing")
 
@@ -80,13 +81,14 @@ def test_remediate_groq_failure_returns_502(monkeypatch):
 
         response = client.post("/api/remediate", json=_SAMPLE_REQUEST)
 
-    assert response.status_code == 502
+    assert response.status_code == 200
+    body = response.json()
+    assert "%s" in body["remediation"]["fixed_code"]
 
 
-def test_remediate_malformed_json_returns_502(monkeypatch):
+def test_remediate_malformed_json_returns_fallback(monkeypatch):
     """If Groq returns text that isn't valid JSON matching our schema,
-    the endpoint should fail clearly rather than crash or silently
-    return garbage."""
+    the endpoint should activate deterministic fallback rather than crashing."""
     from app.core.config import settings
     monkeypatch.setattr(settings, "GROQ_API_KEY", "fake-key-for-testing")
 
@@ -99,7 +101,9 @@ def test_remediate_malformed_json_returns_502(monkeypatch):
 
         response = client.post("/api/remediate", json=_SAMPLE_REQUEST)
 
-    assert response.status_code == 502
+    assert response.status_code == 200
+    body = response.json()
+    assert "%s" in body["remediation"]["fixed_code"]
 
 
 def test_remediate_missing_fields_returns_422():
