@@ -125,10 +125,12 @@ class MultiProviderLLMManager:
             return None
 
         primary = getattr(settings, "GROQ_MODEL", "")
-        models = ([primary] if primary else []) + _GROQ_DEFAULT_MODELS
+        models = _GROQ_DEFAULT_MODELS + ([primary] if primary else [])
         models = list(dict.fromkeys(models))
 
-        for key_attempt in range(len(keys)):
+        effective_timeout = min(timeout, 6.0)
+
+        for key_attempt in range(min(len(keys), 2)):
             key_idx = (self._groq_key_index + key_attempt) % len(keys)
             active_key = keys[key_idx]
             masked_key = active_key[:8] + "..." + active_key[-4:] if len(active_key) > 12 else "key"
@@ -136,11 +138,11 @@ class MultiProviderLLMManager:
             client = OpenAI(
                 api_key=active_key,
                 base_url=_GROQ_BASE_URL,
-                timeout=timeout,
+                timeout=effective_timeout,
                 max_retries=1,
             )
 
-            for model_name in models:
+            for model_name in models[:3]:
                 try:
                     logger.info("[Provider: Groq] Attempting key %s with model '%s'", masked_key, model_name)
                     kwargs = {
@@ -216,12 +218,13 @@ class MultiProviderLLMManager:
         messages: List[Dict[str, str]],
         temperature: float = 0.2,
         response_format: Optional[Dict[str, str]] = None,
-        timeout: float = 40.0,
+        timeout: float = 8.0,
     ) -> str:
         """
         Executes chat completion with Multi-Provider Fallback Chain:
         Gemini -> Groq -> Ollama (or custom order configured in settings.LLM_PROVIDER_ORDER).
         """
+        timeout = min(timeout, 8.0)
         order_str = getattr(settings, "LLM_PROVIDER_ORDER", "groq,gemini,ollama")
         if not order_str or order_str == "gemini,groq,ollama":
             order_str = "groq,gemini,ollama"

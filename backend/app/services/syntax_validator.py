@@ -41,28 +41,28 @@ def _validate_python(code: str) -> tuple[bool, str | None]:
 def _validate_java(code: str) -> tuple[bool, str | None]:
     """
     Validates Java syntax using `javalang`, a pure-Python Java parser.
-
-    Limitation to be upfront about: `javalang` implements Java grammar up
-    to Java 8 syntax. Newer Java features (e.g., records, sealed classes
-    from Java 17+) may not parse. This is an accepted trade-off for
-    Milestone 1 — documented in the Decision Log — since a full JDK
-    dependency is far heavier than our needs justify right now.
+    Supports both full classes and snippet/method-level Java code blocks.
     """
     try:
         javalang.parse.parse(code)
         return True, None
-    except javalang.parser.JavaSyntaxError as exc:
-        error_message = f"JavaSyntaxError: {exc}"
-        logger.info("Java syntax error detected: %s", error_message)
-        return False, error_message
-    except (javalang.tokenizer.LexerError, Exception) as exc:
-        # javalang raises broad/uncommon exceptions for malformed input
-        # (e.g., unterminated strings). We catch generically here so the
-        # API never crashes on malformed input — it always returns a
-        # structured error instead.
-        error_message = f"JavaSyntaxError: unable to parse — {exc}"
-        logger.info("Java parsing failed: %s", error_message)
-        return False, error_message
+    except Exception:
+        # Try wrapping in dummy class/method wrapper for snippet validation
+        try:
+            javalang.parse.parse(f"public class _SecoriaWrapper {{\n{code}\n}}")
+            return True, None
+        except Exception:
+            try:
+                javalang.parse.parse(f"public class _SecoriaWrapper {{\npublic void _secoriaMethod() throws Exception {{\n{code}\n}}\n}}")
+                return True, None
+            except javalang.parser.JavaSyntaxError as exc:
+                error_message = f"JavaSyntaxError: {exc}"
+                logger.info("Java syntax error detected: %s", error_message)
+                return False, error_message
+            except Exception as exc:
+                error_message = f"JavaSyntaxError: unable to parse — {exc}"
+                logger.info("Java parsing failed: %s", error_message)
+                return False, error_message
 
 
 # Dispatch table: maps language -> validator function.

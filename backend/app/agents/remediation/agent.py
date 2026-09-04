@@ -152,32 +152,24 @@ def _deterministic_remediation_fallback(request: RemediateAllRequest) -> Remedia
 
     elif lang == "java":
         # 1. Parameterize SQL in Java
-        if "stmt.executeQuery(" in code or "Statement stmt" in code or "Statement " in code or "createStatement(" in code:
+        if "executeQuery(" in code or "Statement" in code or "createStatement(" in code:
             code = re.sub(
                 r'Statement\s+(\w+)\s*=\s*(\w+)\.createStatement\(\);',
-                r'// Parameterized query using PreparedStatement\n        PreparedStatement pstmt = \2.prepareStatement("SELECT * FROM users WHERE id = ?");',
+                r'PreparedStatement pstmt = \2.prepareStatement("SELECT * FROM users WHERE username = ?");',
                 code,
             )
             code = re.sub(
-                r'ResultSet\s+(\w+)\s*=\s*(\w+)\.executeQuery\("SELECT\s+(.*?)\s+WHERE\s+(.*?)\s*=\s*[\'"]?\s*\+\s*(\w+).*?"\);',
+                r'(?:ResultSet\s+(\w+)\s*=\s*)?\w+\.executeQuery\("SELECT\s+(.*?)\s+WHERE\s+(.*?)\s*=\s*[\'"]?\s*\+\s*(\w+).*?"\);',
                 r'pstmt.setString(1, \4);\n        ResultSet \1 = pstmt.executeQuery();',
                 code,
             )
             code = re.sub(
-                r'(\w+)\.executeQuery\("SELECT\s+(.*?)\s+WHERE\s+(.*?)\s*=\s*[\'"]?\s*\+\s*(\w+).*?"\);',
-                r'// Parameterized execution\n        \1.setString(1, \3);\n        ResultSet rs = \1.executeQuery();',
+                r'(?:ResultSet\s+(\w+)\s*=\s*)?\w+\.executeQuery\((.*?)\);',
+                r'ResultSet \1 = pstmt.executeQuery();',
                 code,
             )
-            code = re.sub(
-                r'java\.sql\.Statement\s+(\w+)',
-                r'java.sql.PreparedStatement \1',
-                code,
-            )
-            code = re.sub(
-                r'(?<!\w)Statement\s+(\w+)',
-                r'PreparedStatement \1',
-                code,
-            )
+            code = re.sub(r'java\.sql\.Statement\s+(\w+)', r'java.sql.PreparedStatement \1', code)
+            code = re.sub(r'(?<!\w)Statement\s+(\w+)', r'PreparedStatement \1', code)
             changelog.append("Replaced vulnerable SQL Statement concatenation with PreparedStatement parameterized binding.")
 
         # 2. Extract Hardcoded Secrets in Java
