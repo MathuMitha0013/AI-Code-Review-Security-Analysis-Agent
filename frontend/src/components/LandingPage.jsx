@@ -2,7 +2,7 @@ import React from 'react'
 import ThemeToggle from './ThemeToggle'
 import logoDark from '../assets/logo-dark.png'
 
-export default function LandingPage({ onLaunchApp, onSelectSample }) {
+export default function LandingPage({ onLaunchApp, onSelectSample, onOpenZipModal }) {
   const agents = [
     {
       id: 'code-analysis',
@@ -146,6 +146,15 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
             </nav>
 
             <div className="flex items-center gap-3">
+              {onOpenZipModal && (
+                <button
+                  onClick={onOpenZipModal}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-xs transition-all cursor-pointer"
+                  title="Upload and scan Python/Java project .zip archive"
+                >
+                  <span>📦 ZIP Project Scan</span>
+                </button>
+              )}
               <ThemeToggle />
 
               <button
@@ -164,38 +173,42 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
 
       {/* 2. Hero Section */}
       <section className="relative overflow-hidden pt-10 pb-20 md:pt-16 md:pb-28">
-        {/* Radiant Ambient Glows */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-purple-500/20 via-indigo-500/10 to-transparent blur-[120px] rounded-full pointer-events-none -z-10" />
-        <div className="absolute top-1/3 left-1/4 w-[350px] h-[250px] bg-purple-400/15 blur-[90px] rounded-full pointer-events-none -z-10" />
+        {/* Radiant Ambient Floating Glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[950px] h-[500px] bg-gradient-to-b from-purple-600/25 via-indigo-600/15 to-transparent blur-[130px] rounded-full pointer-events-none -z-10 animate-float-slow" />
+        <div className="absolute top-1/4 left-1/6 w-[400px] h-[300px] bg-purple-500/15 blur-[100px] rounded-full pointer-events-none -z-10 animate-float" />
+        <div className="absolute top-1/3 right-1/6 w-[350px] h-[280px] bg-indigo-500/15 blur-[100px] rounded-full pointer-events-none -z-10 animate-float-slow" />
 
         <div className="mx-auto max-w-7xl px-6 text-center">
           {/* Platform Tag */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/90 dark:border-indigo-500/30 dark:bg-indigo-500/10 px-4 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-400 mb-6 backdrop-blur-md shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-indigo-200/80 bg-indigo-50/90 dark:border-indigo-500/30 dark:bg-indigo-500/10 px-4 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-400 mb-6 backdrop-blur-md shadow-xs animate-slide-up">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600 dark:bg-indigo-400"></span>
+            </span>
             <span>⚡ Automated Multi-Agent Code Audit Platform</span>
           </div>
 
           {/* Prominent Violet Logo Centerpiece */}
           <div className="flex justify-center mb-4">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-purple-500/30 blur-3xl rounded-full opacity-70 group-hover:opacity-100 transition-opacity" />
+            <div className="relative group cursor-pointer">
+              <div className="absolute inset-0 bg-purple-500/35 blur-3xl rounded-full opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
               <img
                 src={logoDark}
                 alt="Secoria Logo"
-                className="relative h-24 sm:h-32 md:h-40 w-auto drop-shadow-[0_14px_40px_rgba(124,58,237,0.5)] transition-transform duration-300 hover:scale-105"
+                className="relative h-24 sm:h-32 md:h-40 w-auto drop-shadow-[0_16px_45px_rgba(124,58,237,0.55)] transition-all duration-300 hover:scale-110 hover:-rotate-1"
               />
             </div>
           </div>
 
           {/* Primary Brand Name — Pure Text using font-brand (Orbitron) */}
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-widest font-brand my-4">
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent drop-shadow-sm">
+            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent drop-shadow-md animate-gradient-x">
               SECORIA
             </span>
           </h1>
           
           <div className="mt-3.5 mx-auto max-w-4xl">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[var(--color-text-primary)] leading-snug">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[var(--color-text-primary)] leading-snug tracking-tight">
               Development of Smart Code Inspection Platform with Vulnerability Detection System
             </h2>
           </div>
@@ -208,26 +221,34 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <button
               onClick={onLaunchApp}
-              className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 px-7 py-4 text-base font-bold text-white shadow-xl shadow-indigo-500/30 transition-all duration-200 hover:scale-105 hover:shadow-indigo-500/40 cursor-pointer"
+              className="btn-glow inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 px-7 py-4 text-base font-bold text-white shadow-xl shadow-indigo-500/30 transition-all duration-200 hover:scale-105 hover:shadow-indigo-500/40 cursor-pointer"
             >
-              <svg className="w-5 h-5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-indigo-200 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               <span>Launch Live Code Reviewer</span>
             </button>
+            {onOpenZipModal && (
+              <button
+                onClick={onOpenZipModal}
+                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-7 py-4 text-base font-bold text-emerald-600 dark:text-emerald-400 shadow-sm transition-all duration-200 hover:bg-emerald-500/20 hover:scale-105 cursor-pointer"
+              >
+                <span>📦 Scan Project .ZIP</span>
+              </button>
+            )}
             <a
               href="#demo-samples"
-              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-7 py-4 text-base font-bold text-[var(--color-text-primary)] shadow-sm transition-all duration-200 hover:border-indigo-500/40 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/5 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-7 py-4 text-base font-bold text-[var(--color-text-primary)] shadow-sm transition-all duration-200 hover:border-indigo-500/40 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/5 hover:-translate-y-0.5 cursor-pointer"
             >
               <span>Explore Demo Samples</span>
-              <svg className="w-4 h-4 text-[var(--color-text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[var(--color-text-secondary)] transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </a>
           </div>
 
           {/* Interactive IDE Mockup Preview */}
-          <div className="mt-14 mx-auto max-w-4xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl shadow-indigo-500/10 overflow-hidden text-left">
+          <div className="mt-14 mx-auto max-w-4xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl shadow-indigo-500/10 overflow-hidden text-left interactive-card">
             <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3 bg-[var(--color-bg-subtle)]">
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-rose-500/90 ring-1 ring-rose-500/30" />
@@ -314,11 +335,11 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
             {agents.map((agent) => (
               <div
                 key={agent.id}
-                className="premium-card group rounded-2xl p-6 flex flex-col justify-between"
+                className="premium-card interactive-card group rounded-2xl p-6 flex flex-col justify-between hover:border-indigo-500/50"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 group-hover:scale-110 transition-transform">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                       {agent.icon}
                     </div>
                     <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${agent.badgeColor}`}>
@@ -339,7 +360,7 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
                   {agent.tags.map((tag, tIdx) => (
                     <span
                       key={tIdx}
-                      className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border)]"
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border)] transition-colors hover:border-indigo-500/30"
                     >
                       {tag}
                     </span>
@@ -370,7 +391,7 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
             {workflowSteps.map((step, idx) => (
               <div
                 key={idx}
-                className="premium-card rounded-2xl p-6 flex flex-col"
+                className="premium-card interactive-card rounded-2xl p-6 flex flex-col hover:border-purple-500/40"
               >
                 <div className="text-2xl font-black text-indigo-600/40 dark:text-indigo-400/40 mb-3 font-mono">
                   {step.num}
@@ -404,10 +425,11 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
 
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Sample 1: Clean */}
-            <div className="premium-card rounded-2xl border-2 border-emerald-500/30 dark:border-emerald-500/30 p-6 flex flex-col justify-between hover:border-emerald-500/60 transition-all">
+            <div className="premium-card interactive-card rounded-2xl border-2 border-emerald-500/30 dark:border-emerald-500/30 p-6 flex flex-col justify-between hover:border-emerald-500/70 hover:shadow-emerald-500/10 transition-all">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     Health Score: 100/100
                   </span>
                   <span className="text-xs font-bold text-[var(--color-text-muted)]">Tier 1</span>
@@ -421,17 +443,18 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
               </div>
               <button
                 onClick={() => onSelectSample('clean')}
-                className="mt-6 w-full rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30 font-bold py-3 text-sm shadow-xs transition-all hover:scale-[1.01] cursor-pointer"
+                className="mt-6 w-full rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30 font-bold py-3 text-sm shadow-xs transition-all hover:scale-[1.02] cursor-pointer"
               >
                 Load Clean Sample →
               </button>
             </div>
 
             {/* Sample 2: Smells */}
-            <div className="premium-card rounded-2xl border-2 border-amber-500/30 dark:border-amber-500/30 p-6 flex flex-col justify-between hover:border-amber-500/60 transition-all">
+            <div className="premium-card interactive-card rounded-2xl border-2 border-amber-500/30 dark:border-amber-500/30 p-6 flex flex-col justify-between hover:border-amber-500/70 hover:shadow-amber-500/10 transition-all">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                     Health Score: ~70/100
                   </span>
                   <span className="text-xs font-bold text-[var(--color-text-muted)]">Tier 2</span>
@@ -445,33 +468,34 @@ export default function LandingPage({ onLaunchApp, onSelectSample }) {
               </div>
               <button
                 onClick={() => onSelectSample('smells')}
-                className="mt-6 w-full rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30 font-bold py-3 text-sm shadow-xs transition-all hover:scale-[1.01] cursor-pointer"
+                className="mt-6 w-full rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30 font-bold py-3 text-sm shadow-xs transition-all hover:scale-[1.02] cursor-pointer"
               >
-                Load Complexity Sample →
+                Load Code Smells Sample →
               </button>
             </div>
 
-            {/* Sample 3: Security Risks */}
-            <div className="premium-card rounded-2xl border-2 border-rose-500/30 dark:border-rose-500/30 p-6 flex flex-col justify-between hover:border-rose-500/60 transition-all">
+            {/* Sample 3: Security */}
+            <div className="premium-card interactive-card rounded-2xl border-2 border-rose-500/30 dark:border-rose-500/30 p-6 flex flex-col justify-between hover:border-rose-500/70 hover:shadow-rose-500/10 transition-all">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
                     Health Score: &lt; 50/100
                   </span>
                   <span className="text-xs font-bold text-[var(--color-text-muted)]">Tier 3</span>
                 </div>
                 <h3 className="text-lg font-bold text-[var(--color-text-primary)]">
-                  03 Critical OWASP Risks
+                  03 Critical OWASP Vulnerabilities
                 </h3>
                 <p className="mt-2 text-xs sm:text-sm text-[var(--color-text-secondary)] font-medium leading-relaxed">
-                  Contains SQLi, command injection, hardcoded credentials, weak MD5 crypto, and unsafe pickle deserialization.
+                  Demonstrates SQL injection, OS command injection, weak hashing (MD5), and hardcoded secrets.
                 </p>
               </div>
               <button
                 onClick={() => onSelectSample('security')}
-                className="mt-6 w-full rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 dark:text-rose-400 dark:border-rose-500/30 font-bold py-3 text-sm shadow-xs transition-all hover:scale-[1.01] cursor-pointer"
+                className="mt-6 w-full rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 dark:text-rose-400 dark:border-rose-500/30 font-bold py-3 text-sm shadow-xs transition-all hover:scale-[1.02] cursor-pointer"
               >
-                Load Vulnerability Sample →
+                Load Security Sample →
               </button>
             </div>
           </div>

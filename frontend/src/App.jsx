@@ -6,6 +6,8 @@ import ChatSidebar from './components/ChatSidebar'
 import ThemeToggle from './components/ThemeToggle'
 import LandingPage from './components/LandingPage'
 import GitHubPRModal from './components/GitHubPRModal'
+import ZipUploadModal from './components/ZipUploadModal'
+import MultiFileExplorer from './components/MultiFileExplorer'
 import { runReview } from './services/api'
 import logoDark from './assets/logo-dark.png'
 
@@ -176,6 +178,10 @@ export default function App() {
   // GitHub PR Bot Modal State
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false)
 
+  // Multi-File ZIP Project Modal & Report State
+  const [isZipModalOpen, setIsZipModalOpen] = useState(false)
+  const [zipReport, setZipReport] = useState(null)
+
   const canSubmit = mode === 'paste' ? code.trim().length > 0 : file !== null
   const hasResults = isReviewing || report !== null || reviewError !== null
 
@@ -281,10 +287,24 @@ export default function App() {
 
   if (view === 'landing') {
     return (
-      <LandingPage
-        onLaunchApp={handleLaunchReviewer}
-        onSelectSample={handleSelectSample}
-      />
+      <>
+        <LandingPage
+          onLaunchApp={handleLaunchReviewer}
+          onSelectSample={handleSelectSample}
+          onOpenZipModal={() => {
+            setView('app')
+            setIsZipModalOpen(true)
+          }}
+        />
+        <ZipUploadModal
+          isOpen={isZipModalOpen}
+          onClose={() => setIsZipModalOpen(false)}
+          onScanComplete={(zipResult) => {
+            setZipReport(zipResult)
+            setView('app')
+          }}
+        />
+      </>
     )
   }
 
@@ -323,8 +343,16 @@ export default function App() {
           
           <div className="flex items-center gap-3">
             <button
+              onClick={() => setIsZipModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-xs transition-all cursor-pointer"
+              title="Upload and scan Python/Java project .zip archive"
+            >
+              <span>📦 ZIP Project Scan</span>
+            </button>
+
+            <button
               onClick={() => setIsGitHubModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50 shadow-xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50 shadow-xs transition-all cursor-pointer"
               title="Inspect GitHub Pull Requests or Git Diffs"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -338,84 +366,111 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8 print-w-full">
-        {/* Workspace Title Header */}
-        <div className="border-b border-[var(--color-border)] pb-5 no-print">
-          <div className="flex items-center gap-2.5 mb-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-              Interactive Workspace
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
-            Code Inspection & Security Analysis
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-[var(--color-text-secondary)] font-medium">
-            Development of Smart Code Inspection Platform with Vulnerability Detection System
-          </p>
-        </div>
+        {zipReport ? (
+          <MultiFileExplorer
+            zipReport={zipReport}
+            onClose={() => setZipReport(null)}
+            onLoadFileToEditor={(fileCode, lang) => {
+              setCode(fileCode)
+              setMode('paste')
+              setFile(null)
+              setSubmittedCode(fileCode)
+              setZipReport(null)
+            }}
+            onOpenChatWithFinding={handleAskAssistant}
+          />
+        ) : (
+          <>
+            {/* Workspace Title Header */}
+            <div className="border-b border-[var(--color-border)] pb-5 no-print">
+              <div className="flex items-center gap-2.5 mb-1">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                  Interactive Workspace
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
+                Code Inspection & Security Analysis
+              </h1>
+              <p className="mt-1 text-xs sm:text-sm text-[var(--color-text-secondary)] font-medium">
+                Development of Smart Code Inspection Platform with Vulnerability Detection System
+              </p>
+            </div>
 
-        {/* Editor section — centered, compact width */}
-        <div className="mx-auto mt-6 max-w-3xl no-print">
-          <div className="inline-flex rounded-xl border border-[var(--color-border)] p-1 bg-[var(--color-bg-subtle)] shadow-xs">
-            {['paste', 'upload'].map((m) => (
-              <button
-                key={m}
-                onClick={() => switchMode(m)}
-                className={`rounded-lg px-4 py-1.5 text-xs font-bold capitalize transition-all cursor-pointer ${
-                  mode === m
-                    ? 'bg-[var(--color-surface)] text-indigo-600 dark:text-indigo-400 shadow-sm border border-[var(--color-border)]'
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                }`}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
+            {/* Editor section — centered, compact width */}
+            <div className="mx-auto mt-6 max-w-3xl no-print">
+              <div className="flex items-center justify-between">
+                <div className="inline-flex rounded-xl border border-[var(--color-border)] p-1 bg-[var(--color-bg-subtle)] shadow-xs">
+                  {['paste', 'upload'].map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => switchMode(m)}
+                      className={`rounded-lg px-4 py-1.5 text-xs font-bold capitalize transition-all cursor-pointer ${
+                        mode === m
+                          ? 'bg-[var(--color-surface)] text-indigo-600 dark:text-indigo-400 shadow-sm border border-[var(--color-border)]'
+                          : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                      }`}
+                    >
+                      {m === 'paste' ? 'Paste Code' : 'Upload Single File'}
+                    </button>
+                  ))}
+                </div>
 
-          <div className="mt-4">
-            {mode === 'paste' ? (
-              <CodeEditor value={code} onChange={setCode} disabled={isReviewing} />
-            ) : (
-              <FileUpload onFileSelected={setFile} disabled={isReviewing} />
+                <button
+                  onClick={() => setIsZipModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-xs transition-all cursor-pointer"
+                  title="Upload a whole ZIP archive containing Python and Java files"
+                >
+                  <span>📦 Scan .ZIP Archive</span>
+                </button>
+              </div>
+
+              <div className="mt-4">
+                {mode === 'paste' ? (
+                  <CodeEditor value={code} onChange={setCode} disabled={isReviewing} />
+                ) : (
+                  <FileUpload onFileSelected={setFile} disabled={isReviewing} />
+                )}
+              </div>
+
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={handleRunReview}
+                  disabled={!canSubmit || isReviewing}
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 px-5 py-3.5 font-bold text-white
+                             shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.01] hover:shadow-indigo-500/35
+                             disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                >
+                  {isReviewing ? 'Running Multi-Agent Analysis…' : 'Run Full Review'}
+                </button>
+                <button
+                  onClick={handleClear}
+                  disabled={isReviewing || (!code && !file && !report)}
+                  title="Clear code and results"
+                  className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]
+                             px-5 py-3.5 font-semibold text-[var(--color-text-secondary)] shadow-xs transition-colors
+                             hover:border-rose-500/40 hover:text-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-500/10
+                             disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            {/* Results section */}
+            {hasResults && (
+              <div className="mt-10">
+                <FindingsDashboard
+                  report={report}
+                  isLoading={isReviewing}
+                  error={reviewError}
+                  fullCode={submittedCode}
+                  onAskAssistant={handleAskAssistant}
+                  onApplyCleanCode={handleApplyCleanCode}
+                />
+              </div>
             )}
-          </div>
-
-          <div className="mt-4 flex gap-3">
-            <button
-              onClick={handleRunReview}
-              disabled={!canSubmit || isReviewing}
-              className="flex-1 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 px-5 py-3.5 font-bold text-white
-                         shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.01] hover:shadow-indigo-500/35
-                         disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-            >
-              {isReviewing ? 'Running Multi-Agent Analysis…' : 'Run Full Review'}
-            </button>
-            <button
-              onClick={handleClear}
-              disabled={isReviewing || (!code && !file && !report)}
-              title="Clear code and results"
-              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]
-                         px-5 py-3.5 font-semibold text-[var(--color-text-secondary)] shadow-xs transition-colors
-                         hover:border-rose-500/40 hover:text-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-500/10
-                         disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-
-        {/* Results section */}
-        {hasResults && (
-          <div className="mt-10">
-            <FindingsDashboard
-              report={report}
-              isLoading={isReviewing}
-              error={reviewError}
-              fullCode={submittedCode}
-              onAskAssistant={handleAskAssistant}
-              onApplyCleanCode={handleApplyCleanCode}
-            />
-          </div>
+          </>
         )}
       </main>
 
@@ -429,7 +484,7 @@ export default function App() {
         report={report}
       />
 
-      {/* GitHub PR Review & CI/CD Modal */}
+      {/* GitHub PR Review Bot Modal */}
       <GitHubPRModal
         isOpen={isGitHubModalOpen}
         onClose={() => setIsGitHubModalOpen(false)}
@@ -438,6 +493,16 @@ export default function App() {
           setMode('paste')
           setFile(null)
           setSubmittedCode(diffCode)
+        }}
+      />
+
+      {/* Multi-File ZIP Upload Modal */}
+      <ZipUploadModal
+        isOpen={isZipModalOpen}
+        onClose={() => setIsZipModalOpen(false)}
+        onZipReportLoaded={(rep) => {
+          setZipReport(rep)
+          setReport(null)
         }}
       />
 

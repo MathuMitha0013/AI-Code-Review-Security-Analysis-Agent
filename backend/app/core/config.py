@@ -47,12 +47,19 @@ class Settings(BaseSettings):
     # --- Logging ---
     LOG_LEVEL: str = "INFO"
 
-    # --- Remediation Agent (Milestone 3 & 4) ---
+    # --- Multi-Provider LLM Settings (Gemini -> Groq -> Ollama Fallback) ---
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"
+    
     GROQ_API_KEY: str = ""
     GROQ_API_KEY_2: str = ""
     GROQ_API_KEY_3: str = ""
     GROQ_API_KEYS: str = ""
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
+
+    OLLAMA_BASE_URL: str = "http://localhost:11434/v1"
+    OLLAMA_MODEL: str = "qwen2.5-coder"
+    LLM_PROVIDER_ORDER: str = "gemini,groq,ollama"
 
     # --- Vector DB (RAG Chatbot - Milestone 3) ---
     CHROMA_PERSIST_DIR: str = _DEFAULT_CHROMA_PATH

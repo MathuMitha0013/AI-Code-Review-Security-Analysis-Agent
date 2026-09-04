@@ -25,7 +25,7 @@ async def remediate_finding(request: RemediationRequest) -> RemediationResponse:
     try:
         result = generate_remediation(request)
     except RuntimeError as exc:
-        if "not configured" in str(exc):
+        if "not configured" in str(exc) or "missing API keys" in str(exc):
             raise HTTPException(status_code=503, detail=str(exc))
         raise HTTPException(status_code=502, detail=str(exc))
 
@@ -42,7 +42,7 @@ async def auto_remediate_all(request: RemediateAllRequest) -> RemediateAllRespon
         result = generate_full_remediation(request)
         return result
     except RuntimeError as exc:
-        if "not configured" in str(exc):
+        if "not configured" in str(exc) or "missing API keys" in str(exc):
             raise HTTPException(status_code=503, detail=str(exc))
         raise HTTPException(status_code=502, detail=str(exc))
 

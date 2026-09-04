@@ -319,5 +319,29 @@ export async function simulatePRReview({ pr_url, diff_patch, github_token, post_
   return response.json()
 }
 
+/**
+ * Uploads a ZIP project archive containing Python and Java files
+ * and returns the batch MultiFileReviewReport.
+ *
+ * @param {File|Blob} zipFile - The .zip archive file
+ * @returns {Promise<Object>} The MultiFileReviewReport object
+ */
+export async function reviewZipArchive(zipFile) {
+  const formData = new FormData()
+  formData.append('file', zipFile, zipFile.name || 'project.zip')
+
+  const response = await fetch(`${API_BASE_URL}/api/review-zip`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(errorBody.detail || `ZIP analysis failed with status ${response.status}`)
+  }
+
+  return response.json()
+}
+
 
 

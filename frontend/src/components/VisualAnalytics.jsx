@@ -306,7 +306,8 @@ function MultiAgentGraphFlow({ language, summary }) {
  * Main Visual Analytics Component
  */
 export default function VisualAnalytics({ report, onSelectCategory, selectedCategory, onSelectSeverity, selectedSeverity }) {
-  const summary = report?.summary
+  const summary = report?.summary || {}
+  const language = report?.language || 'python'
 
   // Compute breakdown by category
   const categoryData = useMemo(() => {
@@ -326,7 +327,7 @@ export default function VisualAnalytics({ report, onSelectCategory, selectedCate
   const totalFindings = summary?.total_findings ?? (report?.findings?.length || 0)
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-slide-up">
       {/* Top 2 Charts: Donut Chart & Severity Spectrum */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CategoryDonutChart

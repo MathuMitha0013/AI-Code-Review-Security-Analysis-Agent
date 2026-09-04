@@ -10,11 +10,11 @@ function HealthScoreGauge({ score }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimatedScore(score)
-    }, 150)
+    }, 100)
     return () => clearTimeout(timer)
   }, [score])
 
-  const radius = 26
+  const radius = 28
   const strokeWidth = 5
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (animatedScore / 100) * circumference
@@ -22,45 +22,52 @@ function HealthScoreGauge({ score }) {
   let strokeColor = 'stroke-emerald-500'
   let textColor = 'text-emerald-500'
   let ratingText = 'Excellent'
-  let borderStyle = 'border-emerald-500/20 bg-emerald-500/5'
+  let borderStyle = 'border-emerald-500/30 bg-emerald-500/5 shadow-emerald-500/10'
+  let glowColor = 'rgba(16, 185, 129, 0.2)'
 
   if (score < 50) {
     strokeColor = 'stroke-rose-500'
     textColor = 'text-rose-500'
-    ratingText = 'Critical'
-    borderStyle = 'border-rose-500/20 bg-rose-500/5'
+    ratingText = 'Critical Risks'
+    borderStyle = 'border-rose-500/30 bg-rose-500/5 shadow-rose-500/10 animate-pulse-danger'
+    glowColor = 'rgba(244, 63, 94, 0.25)'
   } else if (score < 70) {
     strokeColor = 'stroke-orange-500'
     textColor = 'text-orange-500'
-    ratingText = 'Warning'
-    borderStyle = 'border-orange-500/20 bg-orange-500/5'
+    ratingText = 'Warning Issues'
+    borderStyle = 'border-orange-500/30 bg-orange-500/5 shadow-orange-500/10'
+    glowColor = 'rgba(249, 115, 22, 0.2)'
   } else if (score < 90) {
     strokeColor = 'stroke-amber-500'
     textColor = 'text-amber-500'
     ratingText = 'Needs Work'
-    borderStyle = 'border-amber-500/20 bg-amber-500/5'
+    borderStyle = 'border-amber-500/30 bg-amber-500/5 shadow-amber-500/10'
+    glowColor = 'rgba(245, 158, 11, 0.2)'
   }
 
   return (
-    <div className={`rounded-2xl border p-4 flex items-center justify-between transition-all duration-300 shadow-sm ${borderStyle}`}>
-      <div className="space-y-0.5">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Code Health</div>
-        <div className={`text-sm font-bold ${textColor}`}>{ratingText}</div>
-        <div className="text-[11px] text-[var(--color-text-muted)]">Scale: 0 - 100</div>
+    <div className={`rounded-2xl border p-4 flex items-center justify-between transition-all duration-300 shadow-md ${borderStyle} hover:-translate-y-0.5`}>
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5">
+          <span className={`h-2 w-2 rounded-full ${score < 50 ? 'bg-rose-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Code Health</span>
+        </div>
+        <div className={`text-sm font-extrabold tracking-tight ${textColor}`}>{ratingText}</div>
+        <div className="text-[11px] text-[var(--color-text-muted)] font-medium">Metric Score: 0 — 100</div>
       </div>
-      <div className="relative flex items-center justify-center h-14 w-14 shrink-0">
+      <div className="relative flex items-center justify-center h-16 w-16 shrink-0 drop-shadow-sm">
         <svg className="w-full h-full transform -rotate-90">
           <circle
-            cx="28"
-            cy="28"
+            cx="32"
+            cy="32"
             r={radius}
-            className="stroke-[var(--color-border)] opacity-40"
+            className="stroke-[var(--color-border)] opacity-30"
             strokeWidth={strokeWidth}
             fill="transparent"
           />
           <circle
-            cx="28"
-            cy="28"
+            cx="32"
+            cy="32"
             r={radius}
             className={`transition-all duration-1000 ease-out ${strokeColor}`}
             strokeWidth={strokeWidth}
@@ -70,9 +77,12 @@ function HealthScoreGauge({ score }) {
             fill="transparent"
           />
         </svg>
-        <span className="absolute text-sm font-extrabold text-[var(--color-text-primary)] font-mono">
-          {score}
-        </span>
+        <div className="absolute flex flex-col items-center justify-center">
+          <span className="text-base font-black text-[var(--color-text-primary)] font-mono leading-none">
+            {score}
+          </span>
+          <span className="text-[9px] text-[var(--color-text-muted)] font-semibold mt-0.5">/100</span>
+        </div>
       </div>
     </div>
   )
@@ -369,12 +379,12 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
             <button
               onClick={handleExportPDF}
               disabled={isExportingPdf}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm hover:text-[var(--color-text-primary)] hover:border-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-xs font-bold text-[var(--color-text-secondary)] shadow-sm hover:text-[var(--color-text-primary)] hover:border-indigo-500/50 hover:shadow-md transition-all cursor-pointer btn-glow"
               title="Download formatted PDF code review report"
             >
               {isExportingPdf ? (
                 <>
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent"></div>
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent"></div>
                   <span>Exporting...</span>
                 </>
               ) : (
@@ -389,7 +399,7 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
             <button
               onClick={handleGeneratePRSummary}
               disabled={isGeneratingSummary}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-indigo-500/20 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer btn-glow"
               title="Compile GitHub-ready review comment summary"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -400,12 +410,12 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
             <button
               onClick={handleAutoRemediate}
               disabled={isAutoRemediating || !report?.findings?.length}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-emerald-500/25 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-[1.03] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer btn-glow animate-pulse-glow"
               title="Automatically resolve all vulnerabilities & generate clean code"
             >
               {isAutoRemediating ? (
                 <>
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                   <span>Remediating All...</span>
                 </>
               ) : (
@@ -471,14 +481,14 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
       )}
 
       {/* View Switcher Tab Bar */}
-      <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2 no-print">
-        <div className="inline-flex rounded-xl border border-[var(--color-border)] p-1 bg-[var(--color-surface)] shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] pb-3 no-print">
+        <div className="inline-flex rounded-2xl border border-[var(--color-border)] p-1 bg-[var(--color-surface)] shadow-sm">
           <button
             onClick={() => setActiveTab('list')}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'list'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 scale-[1.02]'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg)]'
             }`}
           >
             <span>📋 Findings List ({filteredFindings.length})</span>
@@ -486,20 +496,23 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
 
           <button
             onClick={() => setActiveTab('visual')}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'visual'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 scale-[1.02]'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg)]'
             }`}
           >
             <span>📊 Visual Graphs & Analytics</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
           </button>
         </div>
 
         {/* Active Filter Pill */}
         {selectedCategory && (
-          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 px-3 py-1 text-xs text-indigo-400 font-semibold">
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 px-3.5 py-1 text-xs text-indigo-400 font-semibold shadow-xs animate-pop-in">
             <span>Filter: <strong>{selectedCategory}</strong></span>
             <button
               onClick={() => setSelectedCategory(null)}
@@ -530,7 +543,7 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
       ) : (
         <div className="space-y-4">
           {/* Severity Summary Filter Cards & Health Gauge */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3.5 animate-slide-up">
             {SEVERITY_ORDER.map((severity) => {
               const count = summary[severity] ?? 0
               const isActive = activeSeverities.has(severity)
@@ -539,14 +552,14 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
                 <button
                   key={severity}
                   onClick={() => toggleSeverity(severity)}
-                  className={`rounded-2xl border p-4 text-left transition-all duration-200 cursor-pointer ${
-                    isActive ? styles.cardActive : 'border-[var(--color-border)] bg-[var(--color-surface)] opacity-40 hover:opacity-75'
+                  className={`rounded-2xl border p-4 text-left transition-all duration-300 cursor-pointer interactive-card ${
+                    isActive ? styles.cardActive : 'border-[var(--color-border)] bg-[var(--color-surface)] opacity-45 hover:opacity-85'
                   }`}
                   title={`Click to ${isActive ? 'hide' : 'show'} ${severity} findings`}
                 >
                   <div className="flex items-center justify-between">
                     <div className={`text-2xl font-extrabold font-mono ${styles.text}`}>{count}</div>
-                    <span className={`h-2 w-2 rounded-full ${styles.dot}`} />
+                    <span className={`h-2.5 w-2.5 rounded-full ${styles.dot} ${isActive && count > 0 ? (severity === 'critical' ? 'animate-ping' : 'animate-pulse') : ''}`} />
                   </div>
                   <div className="mt-1 text-xs font-bold capitalize text-[var(--color-text-secondary)]">{severity}</div>
                 </button>
@@ -557,7 +570,7 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
 
           {/* Filter by agent + sort controls */}
           {summary.total_findings > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm animate-slide-up">
               <div className="flex items-center gap-1.5">
                 {['all', 'code_analysis', 'security'].map((agent) => (
                   <button
@@ -565,7 +578,7 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
                     onClick={() => setActiveAgent(agent)}
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                       activeAgent === agent
-                        ? 'bg-indigo-600 text-white shadow-sm'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
                         : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg)]'
                     }`}
                   >
@@ -578,7 +591,7 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] cursor-pointer focus:outline-none"
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
                   <option value="severity">Severity (Critical First)</option>
                   <option value="line">Line Number</option>
@@ -589,8 +602,8 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
 
           {/* Findings List */}
           {summary.total_findings === 0 ? (
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center shadow-sm">
-              <div className="text-2xl mb-2">🎉</div>
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8 text-center shadow-sm animate-pop-in">
+              <div className="text-3xl mb-2 animate-bounce">🎉</div>
               <h4 className="text-base font-bold text-emerald-500">Perfect Health Score (100/100)</h4>
               <p className="mt-1 text-xs text-[var(--color-text-secondary)]">No quality smells or OWASP vulnerabilities detected in the submitted code.</p>
             </div>
@@ -607,7 +620,7 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
               )}
             </div>
           ) : (
-            <ul className="space-y-3.5">
+            <ul className="space-y-3.5 animate-slide-up">
               {filteredFindings.map((finding, idx) => (
                 <FindingItem
                   key={idx}

@@ -27,9 +27,10 @@ _SAMPLE_REQUEST = {
 
 
 def test_remediate_without_api_key_returns_503(monkeypatch):
-    """If GROQ_API_KEY isn't configured, the endpoint should fail clearly
+    """If GROQ_API_KEY/GEMINI_API_KEY isn't configured, the endpoint should fail clearly
     (503, service unavailable) rather than crash unexpectedly."""
     from app.core.config import settings
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "")
     monkeypatch.setattr(settings, "GROQ_API_KEY", "")
     monkeypatch.setattr(settings, "GROQ_API_KEY_2", "")
     monkeypatch.setattr(settings, "GROQ_API_KEY_3", "")

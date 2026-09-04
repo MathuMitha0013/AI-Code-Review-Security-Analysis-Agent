@@ -28,11 +28,14 @@ export default function ChatSidebar({
 
   useEffect(() => {
     if (isOpen) {
+      if (initialContext?.title && !inputValue) {
+        setInputValue(`Explain why "${initialContext.title}" is a security vulnerability and provide the recommended fix.`)
+      }
       setTimeout(() => {
         textareaRef.current?.focus()
       }, 300)
     }
-  }, [isOpen])
+  }, [isOpen, initialContext])
 
   const handleClearChat = () => {
     setMessages([])
@@ -227,14 +230,14 @@ export default function ChatSidebar({
             messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-slide-up`}
               >
                 {/* Bubble */}
                 <div
-                  className={`max-w-[88%] px-4 py-3 rounded-2xl shadow-sm ${
+                  className={`max-w-[88%] px-4 py-3 rounded-2xl shadow-sm transition-all ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 rounded-tr-none text-white'
-                      : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-tl-none text-[var(--color-text-primary)]'
+                      ? 'bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 rounded-tr-none text-white shadow-indigo-500/20'
+                      : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-tl-none text-[var(--color-text-primary)] shadow-sm'
                   }`}
                 >
                   <div className="leading-relaxed">
@@ -244,14 +247,15 @@ export default function ChatSidebar({
                   {/* Document Citation Links (RAG footer) */}
                   {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
                     <div className="mt-3.5 pt-2.5 border-t border-[var(--color-border)]">
-                      <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-bold mb-1.5">
+                      <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-bold mb-1.5 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
                         Knowledge Base Sources
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {msg.sources.map((src, sIdx) => (
                           <div
                             key={sIdx}
-                            className="inline-flex items-center space-x-1 px-2 py-0.5 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md text-[10px] text-[var(--color-text-secondary)] font-mono"
+                            className="inline-flex items-center space-x-1 px-2 py-0.5 bg-[var(--color-bg)] border border-[var(--color-border)] hover:border-indigo-500/40 rounded-md text-[10px] text-[var(--color-text-secondary)] font-mono transition-colors"
                             title={src.content_snippet}
                           >
                             <svg className="w-2.5 h-2.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -271,7 +275,7 @@ export default function ChatSidebar({
 
           {/* Loader bubble */}
           {isLoading && (
-            <div className="flex items-start">
+            <div className="flex items-start animate-slide-up">
               <div className="bg-[var(--color-surface)] border border-[var(--color-border)] px-4 py-3 rounded-2xl rounded-tl-none flex items-center space-x-2.5 shadow-sm">
                 <span className="text-[var(--color-text-secondary)] text-xs font-medium">Searching knowledge base</span>
                 <span className="flex space-x-1">
@@ -285,7 +289,7 @@ export default function ChatSidebar({
 
           {/* Error notice */}
           {errorMsg && (
-            <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-2xl text-xs">
+            <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-2xl text-xs animate-slide-up">
               <div className="font-bold mb-0.5">Communication Error</div>
               <p>{errorMsg}</p>
             </div>
@@ -315,7 +319,7 @@ export default function ChatSidebar({
           <button
             type="submit"
             disabled={!inputValue.trim() || isLoading}
-            className="p-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 text-white rounded-2xl shadow-md shadow-indigo-500/20 transition-all flex-shrink-0 cursor-pointer"
+            className="btn-glow p-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 text-white rounded-2xl shadow-md shadow-indigo-500/20 transition-all flex-shrink-0 cursor-pointer"
             aria-label="Send message"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

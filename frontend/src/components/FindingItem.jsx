@@ -43,12 +43,14 @@ const AGENT_LABELS = {
   security: 'Security',
 }
 
-export default function FindingItem({ finding, fullCode, language, onAskAssistant }) {
+export default function FindingItem({ finding, fullCode, language, onAskAssistant, onOpenChat }) {
   const [isLoading, setIsLoading] = useState(false)
   const [remediation, setRemediation] = useState(null)
   const [error, setError] = useState(null)
   const [isExpanded, setIsExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  const handleAsk = onAskAssistant || onOpenChat
 
   const recType = getRecommendationTypeInfo(finding.source_agent, finding.category)
 
@@ -100,7 +102,7 @@ export default function FindingItem({ finding, fullCode, language, onAskAssistan
     : ''
 
   return (
-    <li className="finding-item-card rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-200 hover:border-indigo-500/30 hover:shadow-md">
+    <li className="finding-item-card rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-300 hover:border-indigo-500/40 hover:shadow-lg interactive-card">
       {/* Finding Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
@@ -111,12 +113,13 @@ export default function FindingItem({ finding, fullCode, language, onAskAssistan
             </span>
           </div>
           <p className="text-xs font-medium text-[var(--color-text-secondary)]">
-            <span className="font-semibold text-indigo-400">{finding.category}</span>
+            <span className="font-semibold text-indigo-500 dark:text-indigo-400">{finding.category}</span>
             {finding.line != null && <span className="font-mono ml-2 font-bold text-[var(--color-text-primary)]">· Line {finding.line}</span>}
           </p>
         </div>
 
         <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${SEVERITY_STYLES[finding.severity]}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${finding.severity === 'critical' ? 'bg-rose-500 animate-ping' : 'bg-current'}`} />
           {finding.severity}
         </span>
       </div>
@@ -142,7 +145,7 @@ export default function FindingItem({ finding, fullCode, language, onAskAssistan
           <button
             onClick={handleGetFix}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-indigo-500/20 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="btn-glow inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-indigo-500/20 transition-all hover:scale-[1.03] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isLoading ? (
               <>
@@ -164,15 +167,15 @@ export default function FindingItem({ finding, fullCode, language, onAskAssistan
         ) : (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-bold text-indigo-400 hover:bg-indigo-500/20 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-bold text-indigo-400 hover:bg-indigo-500/20 transition-all cursor-pointer"
           >
             <span>{isExpanded ? '▲ Hide Remediation' : '▼ View Suggested Fix'}</span>
           </button>
         )}
 
         <button
-          onClick={() => onAskAssistant && onAskAssistant(finding)}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm hover:border-cyan-500/40 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all cursor-pointer"
+          onClick={() => handleAsk && handleAsk(finding)}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm hover:border-cyan-500/40 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all hover:scale-[1.02] cursor-pointer"
         >
           <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -183,7 +186,7 @@ export default function FindingItem({ finding, fullCode, language, onAskAssistan
 
       {/* Error handling */}
       {error && (
-        <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs text-rose-500">
+        <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs text-rose-500 animate-slide-up">
           <p className="font-bold">Unable to generate remediation suggestion:</p>
           <p className="mt-0.5">{error}</p>
         </div>
@@ -191,7 +194,7 @@ export default function FindingItem({ finding, fullCode, language, onAskAssistan
 
       {/* Suggested Fix Panel */}
       {remediation && isExpanded && (
-        <div className="mt-4 space-y-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)]/80 p-4.5 shadow-inner">
+        <div className="mt-4 space-y-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)]/80 p-4.5 shadow-inner animate-slide-up">
           {/* Classification Badge */}
           <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5">
             <span className={`rounded-full border px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider ${recType.badge}`}>

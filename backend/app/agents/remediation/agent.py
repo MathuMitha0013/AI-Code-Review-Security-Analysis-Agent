@@ -308,7 +308,7 @@ def _normalize_code_text(code: str) -> str:
 def _extract_json_payload(text: str) -> dict:
     text = text.strip()
     # Strip <think>...</think> reasoning blocks from reasoning models (e.g. Qwen / DeepSeek)
-    text = re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.IGNORECASE).strip()
+    text = re.sub(r"<think>[\s\S]*?</think>", "", text).strip()
 
     def _postprocess(d: dict) -> dict:
         if "remediated_code" in d and isinstance(d["remediated_code"], str):

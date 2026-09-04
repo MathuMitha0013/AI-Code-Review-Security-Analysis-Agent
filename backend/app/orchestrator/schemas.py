@@ -65,3 +65,51 @@ class UnifiedReviewReport(BaseModel):
         le=100,
         description="Overall code health score from 0 to 100 calculated by findings severity",
     )
+
+
+class FileReviewItem(BaseModel):
+    """Review outcome for an individual Python or Java file in the archive."""
+
+    file_path: str
+    language: str  # "python" or "java"
+    lines_of_code: int = 0
+    health_score: int = 100
+    overall_severity: Severity = "low"
+    findings: list[UnifiedFinding] = []
+    summary: UnifiedSummary
+    syntax_error: Optional[str] = None
+
+
+class MultiFileSummary(BaseModel):
+    """Aggregated project-wide repository metrics across all scanned Python and Java files."""
+
+    total_files_scanned: int
+    total_lines_of_code: int
+    python_files_count: int = 0
+    java_files_count: int = 0
+    total_findings: int = 0
+    critical: int = 0
+    high: int = 0
+    medium: int = 0
+    low: int = 0
+    clean_files_count: int = 0
+    vulnerable_files_count: int = 0
+
+
+class MultiFileReviewReport(BaseModel):
+    """Complete aggregated review report for a multi-file Java/Python ZIP project."""
+
+    archive_name: str
+    summary: MultiFileSummary
+    overall_health_score: int = Field(
+        default=100,
+        ge=0,
+        le=100,
+        description="Aggregated project health score from 0 to 100",
+    )
+    overall_severity: Severity
+    files: list[FileReviewItem]
+    skipped_files: list[str] = Field(
+        default_factory=list,
+        description="Files in archive that were skipped (non-python/java, binaries, or ignored dirs)",
+    )

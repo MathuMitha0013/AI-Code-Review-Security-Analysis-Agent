@@ -14,14 +14,16 @@ import logging
 from fastapi import APIRouter, Form, HTTPException, UploadFile
 
 from app.orchestrator.orchestrator import run_orchestrated_review
-from app.orchestrator.schemas import UnifiedReviewReport
+from app.orchestrator.schemas import UnifiedReviewReport, MultiFileReviewReport
 from app.services.language_detector import detect_language
 from app.services.syntax_validator import validate_syntax
+from app.services.zip_analyzer import analyze_zip_archive
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["orchestration"])
 
 _MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024
+_MAX_ZIP_SIZE_BYTES = 25 * 1024 * 1024
 
 
 @router.post("/review", response_model=UnifiedReviewReport)
@@ -58,3 +60,29 @@ async def review_code(
         raise HTTPException(status_code=400, detail=str(exc))
 
     return report
+
+
+@router.post("/review-zip", response_model=MultiFileReviewReport)
+async def review_zip_archive(file: UploadFile) -> MultiFileReviewReport:
+    """
+    Accepts an uploaded ZIP project archive, extracts all Python (.py) and
+    Java (.java) source files safely, and runs batch multi-agent security reviews.
+    """
+    if not file or not file.filename:
+        raise HTTPException(status_code=400, detail="No ZIP file was uploaded.")
+
+    if not file.filename.lower().endswith(".zip"):
+        raise HTTPException(status_code=400, detail="Uploaded file must be a .zip archive.")
+
+    raw_bytes = await file.read()
+    if len(raw_bytes) > _MAX_ZIP_SIZE_BYTES:
+        raise HTTPException(status_code=413, detail="ZIP archive exceeds maximum 25MB limit.")
+
+    try:
+        report = await analyze_zip_archive(raw_bytes=raw_bytes, archive_name=file.filename)
+        return report
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        logger.error("Failed to analyze zip archive '%s': %s", file.filename, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal error analyzing ZIP archive: {exc}")
