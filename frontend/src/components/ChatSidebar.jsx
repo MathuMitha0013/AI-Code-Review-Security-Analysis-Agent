@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { sendChatMessage } from '../services/api'
 import logoDark from '../assets/logo-dark.png'
+import MarkdownMessage from './MarkdownMessage'
 
 export default function ChatSidebar({
   isOpen,
@@ -40,40 +41,6 @@ export default function ChatSidebar({
   const handleClearChat = () => {
     setMessages([])
     setErrorMsg(null)
-  }
-
-  const formatMessageText = (text) => {
-    if (!text) return null
-    const parts = text.split(/(```[\s\S]*?```)/g)
-    
-    return parts.map((part, index) => {
-      if (part.startsWith('```') && part.endsWith('```')) {
-        const lines = part.split('\n')
-        const firstLine = lines[0].replace('```', '').trim()
-        const language = firstLine || 'code'
-        const code = lines.slice(1, -1).join('\n')
-        
-        return (
-          <div
-            key={index}
-            className="my-3 font-mono text-xs bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl overflow-hidden shadow-sm"
-          >
-            <div className="bg-[var(--color-bg-subtle)] px-3 py-1 text-[10px] text-[var(--color-text-muted)] font-mono border-b border-[var(--color-border)] flex justify-between items-center">
-              <span>{language.toUpperCase()}</span>
-            </div>
-            <pre className="p-3 overflow-x-auto text-[var(--color-text-primary)]">
-              <code>{code}</code>
-            </pre>
-          </div>
-        )
-      }
-      
-      return (
-        <span key={index} className="whitespace-pre-line leading-relaxed text-xs sm:text-sm">
-          {part}
-        </span>
-      )
-    })
   }
 
   const handleSendMessage = async (e) => {
@@ -234,15 +201,13 @@ export default function ChatSidebar({
               >
                 {/* Bubble */}
                 <div
-                  className={`max-w-[88%] px-4 py-3 rounded-2xl shadow-sm transition-all ${
+                  className={`max-w-[92%] px-4 py-3 rounded-2xl shadow-sm transition-all ${
                     msg.role === 'user'
                       ? 'bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 rounded-tr-none text-white shadow-indigo-500/20'
                       : 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-tl-none text-[var(--color-text-primary)] shadow-sm'
                   }`}
                 >
-                  <div className="leading-relaxed">
-                    {formatMessageText(msg.content)}
-                  </div>
+                  <MarkdownMessage content={msg.content} isUser={msg.role === 'user'} />
 
                   {/* Document Citation Links (RAG footer) */}
                   {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
