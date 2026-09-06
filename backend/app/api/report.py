@@ -89,8 +89,8 @@ def _get_report_styles():
         "ReportTitle",
         parent=styles["Normal"],
         fontName="Helvetica-Bold",
-        fontSize=18,
-        leading=22,
+        fontSize=16,
+        leading=20,
         textColor=PRIMARY_COLOR,
     )
 
@@ -98,8 +98,8 @@ def _get_report_styles():
         "ReportSubtitle",
         parent=styles["Normal"],
         fontName="Helvetica",
-        fontSize=9,
-        leading=13,
+        fontSize=8.5,
+        leading=12,
         textColor=TEXT_MUTED,
     )
 
@@ -107,30 +107,30 @@ def _get_report_styles():
         "SectionHeading",
         parent=styles["Normal"],
         fontName="Helvetica-Bold",
-        fontSize=12,
-        leading=16,
+        fontSize=11,
+        leading=15,
         textColor=PRIMARY_COLOR,
-        spaceBefore=12,
-        spaceAfter=6,
+        spaceBefore=10,
+        spaceAfter=5,
     )
 
     sub_section_heading = ParagraphStyle(
         "SubSectionHeading",
         parent=styles["Normal"],
         fontName="Helvetica-Bold",
-        fontSize=10,
-        leading=14,
+        fontSize=9.5,
+        leading=13,
         textColor=ACCENT_INDIGO,
-        spaceBefore=6,
-        spaceAfter=3,
+        spaceBefore=5,
+        spaceAfter=2,
     )
 
     body_style = ParagraphStyle(
         "ReportBody",
         parent=styles["Normal"],
         fontName="Helvetica",
-        fontSize=8.5,
-        leading=12,
+        fontSize=8,
+        leading=11.5,
         textColor=TEXT_DARK,
     )
 
@@ -144,9 +144,46 @@ def _get_report_styles():
         "CodeBoxText",
         parent=styles["Normal"],
         fontName="Courier",
+        fontSize=7,
+        leading=9.5,
+        textColor=colors.HexColor("#991B1B"),
+    )
+
+    # Dedicated Table Header & Cell styles ensuring automatic word-wrapping
+    th_style = ParagraphStyle(
+        "TableHeader",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=7.5,
+        leading=10,
+        textColor=colors.white,
+    )
+
+    th_center = ParagraphStyle(
+        "TableHeaderCenter",
+        parent=th_style,
+        alignment=1,
+    )
+
+    td_style = ParagraphStyle(
+        "TableCell",
+        parent=styles["Normal"],
+        fontName="Helvetica",
         fontSize=7.5,
         leading=10.5,
-        textColor=colors.HexColor("#0F172A"),
+        textColor=TEXT_DARK,
+    )
+
+    td_bold = ParagraphStyle(
+        "TableCellBold",
+        parent=td_style,
+        fontName="Helvetica-Bold",
+    )
+
+    td_center = ParagraphStyle(
+        "TableCellCenter",
+        parent=td_style,
+        alignment=1,
     )
 
     return {
@@ -157,6 +194,11 @@ def _get_report_styles():
         "body": body_style,
         "bold": bold_body,
         "code": code_style,
+        "th": th_style,
+        "th_center": th_center,
+        "td": td_style,
+        "td_bold": td_bold,
+        "td_center": td_center,
     }
 
 
@@ -178,7 +220,6 @@ def _build_pdf_report(report: UnifiedReviewReport) -> BytesIO:
     PRIMARY_COLOR = colors.HexColor("#0F172A")
     ACCENT_INDIGO = colors.HexColor("#4F46E5")
     BG_LIGHT = colors.HexColor("#F8FAFC")
-    BG_CODE = colors.HexColor("#F1F5F9")
 
     COLOR_CRITICAL = colors.HexColor("#DC2626")  # Red 600
     COLOR_HIGH = colors.HexColor("#EA580C")      # Orange 600
@@ -198,8 +239,8 @@ def _build_pdf_report(report: UnifiedReviewReport) -> BytesIO:
         f"<b>Audit Report ID:</b> {report_id} &nbsp;|&nbsp; <b>Scan Date:</b> {today_str} &nbsp;|&nbsp; <b>Language:</b> {report.language.capitalize()}",
         styles["subtitle"]
     ))
-    story.append(Spacer(1, 6))
-    story.append(HRFlowable(width="100%", thickness=1.5, color=ACCENT_INDIGO, spaceBefore=2, spaceAfter=10))
+    story.append(Spacer(1, 4))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=ACCENT_INDIGO, spaceBefore=2, spaceAfter=8))
 
     # 2. Executive Posture & Score Overview
     health = report.health_score
@@ -207,18 +248,20 @@ def _build_pdf_report(report: UnifiedReviewReport) -> BytesIO:
     gate_decision = "PASSED" if report.summary.critical == 0 and report.summary.high == 0 else "BLOCKED"
     gate_color = COLOR_PASSED if gate_decision == "PASSED" else COLOR_CRITICAL
 
+    card_label_style = ParagraphStyle("CardLabel", parent=styles["td_center"], fontName="Helvetica-Bold", textColor=colors.HexColor("#475569"))
+    
     metrics_data = [
         [
-            Paragraph("<b>Overall Code Health Score</b>", styles["body"]),
-            Paragraph("<b>Merge Gate Decision</b>", styles["body"]),
-            Paragraph("<b>Overall Risk Status</b>", styles["body"]),
-            Paragraph("<b>Total Issues Flagged</b>", styles["body"]),
+            Paragraph("Overall Code Health", card_label_style),
+            Paragraph("Merge Gate Decision", card_label_style),
+            Paragraph("Overall Risk Status", card_label_style),
+            Paragraph("Total Issues Flagged", card_label_style),
         ],
         [
-            Paragraph(f"<font size=15 color='{health_color.hexval()}'><b>{health} / 100</b></font>", styles["body"]),
-            Paragraph(f"<font size=13 color='{gate_color.hexval()}'><b>{gate_decision}</b></font>", styles["body"]),
-            Paragraph(f"<font size=13 color='{COLOR_CRITICAL.hexval() if report.overall_severity == 'critical' else COLOR_HIGH.hexval() if report.overall_severity == 'high' else COLOR_MEDIUM.hexval() if report.overall_severity == 'medium' else COLOR_LOW.hexval()}'><b>{report.overall_severity.upper()}</b></font>", styles["body"]),
-            Paragraph(f"<font size=15 color='{PRIMARY_COLOR.hexval()}'><b>{report.summary.total_findings}</b></font>", styles["body"]),
+            Paragraph(f"<font size=14 color='{health_color.hexval()}'><b>{health} / 100</b></font>", styles["td_center"]),
+            Paragraph(f"<font size=12 color='{gate_color.hexval()}'><b>{gate_decision}</b></font>", styles["td_center"]),
+            Paragraph(f"<font size=12 color='{COLOR_CRITICAL.hexval() if report.overall_severity == 'critical' else COLOR_HIGH.hexval() if report.overall_severity == 'high' else COLOR_MEDIUM.hexval() if report.overall_severity == 'medium' else COLOR_LOW.hexval()}'><b>{report.overall_severity.upper()}</b></font>", styles["td_center"]),
+            Paragraph(f"<font size=14 color='{PRIMARY_COLOR.hexval()}'><b>{report.summary.total_findings}</b></font>", styles["td_center"]),
         ],
     ]
 
@@ -229,70 +272,68 @@ def _build_pdf_report(report: UnifiedReviewReport) -> BytesIO:
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
         ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#CBD5E1")),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
     ]))
     story.append(metrics_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 8))
 
-    # 3. Risk Breakdown Matrix with SLA Target Windows
+    # 3. Risk Breakdown Matrix with SLA Target Windows (Wrapped in Paragraph to prevent text overlap)
     story.append(Paragraph("Vulnerability Breakdown & SLA Resolution Matrix", styles["section"]))
     
     breakdown_data = [
-        ["Severity Level", "Issues Found", "OWASP Category Focus", "Action Required", "Resolution SLA"],
         [
-            "Critical",
-            str(report.summary.critical),
-            "Injection, Deserialization, Hardcoded Secrets",
-            "Block PR Merge / Immediate Hotfix",
-            "24 Hours (Immediate)",
+            Paragraph("Severity Level", styles["th"]),
+            Paragraph("Issues", styles["th_center"]),
+            Paragraph("OWASP Category Focus", styles["th"]),
+            Paragraph("Action Required", styles["th"]),
+            Paragraph("Resolution SLA", styles["th_center"]),
         ],
         [
-            "High",
-            str(report.summary.high),
-            "Broken Access Control, Cryptographic Flaws",
-            "Remediate before production release",
-            "7 Days",
+            Paragraph(f"<font color='{COLOR_CRITICAL.hexval()}'><b>Critical</b></font>", styles["td"]),
+            Paragraph(str(report.summary.critical), styles["td_center"]),
+            Paragraph("Injection, Deserialization, Hardcoded Secrets", styles["td"]),
+            Paragraph("Block PR Merge / Immediate Hotfix", styles["td"]),
+            Paragraph("<b>&lt; 24 Hours</b>", styles["td_center"]),
         ],
         [
-            "Medium",
-            str(report.summary.medium),
-            "High Cyclomatic Complexity, Resource Leaks",
-            "Refactor & modularize in current sprint",
-            "14 Days",
+            Paragraph(f"<font color='{COLOR_HIGH.hexval()}'><b>High</b></font>", styles["td"]),
+            Paragraph(str(report.summary.high), styles["td_center"]),
+            Paragraph("Broken Access Control, Cryptographic Flaws", styles["td"]),
+            Paragraph("Remediate before production release", styles["td"]),
+            Paragraph("<b>&le; 7 Days</b>", styles["td_center"]),
         ],
         [
-            "Low / Info",
-            str(report.summary.low),
-            "Code Style, Bare Excepts, Dead Code",
-            "Continuous improvement & cleanup",
-            "Next Sprint",
+            Paragraph(f"<font color='{COLOR_MEDIUM.hexval()}'><b>Medium</b></font>", styles["td"]),
+            Paragraph(str(report.summary.medium), styles["td_center"]),
+            Paragraph("High Complexity, Resource Leaks, Error Handling", styles["td"]),
+            Paragraph("Refactor & modularize in current sprint", styles["td"]),
+            Paragraph("<b>&le; 14 Days</b>", styles["td_center"]),
+        ],
+        [
+            Paragraph(f"<font color='{COLOR_LOW.hexval()}'><b>Low / Info</b></font>", styles["td"]),
+            Paragraph(str(report.summary.low), styles["td_center"]),
+            Paragraph("Code Style, Bare Excepts, Dead Code", styles["td"]),
+            Paragraph("Continuous improvement & cleanup", styles["td"]),
+            Paragraph("Next Sprint", styles["td_center"]),
         ],
     ]
 
-    breakdown_table = Table(breakdown_data, colWidths=[85, 75, 160, 140, 80])
+    # Total width = 75 + 50 + 175 + 150 + 90 = 540 pt
+    breakdown_table = Table(breakdown_data, colWidths=[75, 50, 175, 150, 90])
     breakdown_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), PRIMARY_COLOR),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 8),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('ALIGN', (1, 0), (1, -1), 'CENTER'),
-        ('ALIGN', (4, 0), (4, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, BG_LIGHT]),
-        ('TEXTCOLOR', (0, 1), (0, 1), COLOR_CRITICAL),
-        ('TEXTCOLOR', (0, 2), (0, 2), COLOR_HIGH),
-        ('TEXTCOLOR', (0, 3), (0, 3), COLOR_MEDIUM),
-        ('TEXTCOLOR', (0, 4), (0, 4), COLOR_LOW),
-        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
         ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#94A3B8")),
         ('TOPPADDING', (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
     ]))
     story.append(breakdown_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 8))
 
     # 4. In-Depth Detailed Findings Inventory
     story.append(Paragraph(f"Detailed Findings Inventory ({len(report.findings)} Issues)", styles["section"]))
@@ -353,51 +394,52 @@ def _build_pdf_report(report: UnifiedReviewReport) -> BytesIO:
                 ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
             ]))
 
-            story.append(KeepTogether([finding_table, Spacer(1, 6)]))
+            story.append(KeepTogether([finding_table, Spacer(1, 5)]))
 
     # 5. Actionable 4-Phase Remediation Roadmap
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 6))
     story.append(Paragraph("Actionable 4-Phase Remediation Roadmap", styles["section"]))
 
     roadmap_data = [
-        ["Phase", "Focus Area", "Remediation Guidance & Best Practices"],
         [
-            "Phase 1: Hotfix",
-            "Critical Security",
-            "Eliminate all SQL Injections with parameterized queries, eliminate raw OS commands (os.system / Runtime.exec), and revoke hardcoded secrets.",
+            Paragraph("Phase", styles["th"]),
+            Paragraph("Focus Area", styles["th"]),
+            Paragraph("Remediation Guidance & Best Practices", styles["th"]),
         ],
         [
-            "Phase 2: Hardening",
-            "High & Medium Risks",
-            "Enforce strict input validation with allowlists, replace weak hashing algorithms with bcrypt/SHA-256, and secure object deserialization.",
+            Paragraph("<b>Phase 1: Hotfix</b>", styles["td"]),
+            Paragraph("<font color='#DC2626'><b>Critical Security</b></font>", styles["td"]),
+            Paragraph("Eliminate all SQL Injections with parameterized queries, eliminate raw OS commands (os.system / Runtime.exec), and revoke hardcoded secrets.", styles["td"]),
         ],
         [
-            "Phase 3: Refactoring",
-            "Maintainability",
-            "Decompose high-complexity functions exceeding cyclomatic threshold (score > 10) into single-responsibility modular helper methods.",
+            Paragraph("<b>Phase 2: Hardening</b>", styles["td"]),
+            Paragraph("<font color='#EA580C'><b>High & Medium Risks</b></font>", styles["td"]),
+            Paragraph("Enforce strict input validation with allowlists, replace weak hashing algorithms with bcrypt/SHA-256, and secure object deserialization.", styles["td"]),
         ],
         [
-            "Phase 4: DevSecOps",
-            "CI/CD Governance",
-            "Integrate Secoria GitHub PR Webhook bot into your pull request pipeline to enforce automated merge gates on every commit.",
+            Paragraph("<b>Phase 3: Refactoring</b>", styles["td"]),
+            Paragraph("<font color='#4F46E5'><b>Maintainability</b></font>", styles["td"]),
+            Paragraph("Decompose high-complexity functions exceeding cyclomatic threshold (score > 10) into single-responsibility modular helper methods.", styles["td"]),
+        ],
+        [
+            Paragraph("<b>Phase 4: DevSecOps</b>", styles["td"]),
+            Paragraph("<font color='#059669'><b>CI/CD Governance</b></font>", styles["td"]),
+            Paragraph("Integrate Secoria GitHub PR Webhook bot into your pull request pipeline to enforce automated merge gates on every commit.", styles["td"]),
         ],
     ]
 
-    roadmap_table = Table(roadmap_data, colWidths=[90, 110, 340])
+    # Total width = 95 + 115 + 330 = 540 pt
+    roadmap_table = Table(roadmap_data, colWidths=[95, 115, 330])
     roadmap_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), PRIMARY_COLOR),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 8),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, BG_LIGHT]),
-        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
         ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#94A3B8")),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
     ]))
     story.append(roadmap_table)
 
@@ -442,8 +484,8 @@ def _build_zip_pdf_report(report: MultiFileReviewReport) -> BytesIO:
         f"<b>Project Archive:</b> {report.archive_name} &nbsp;|&nbsp; <b>Report ID:</b> {report_id} &nbsp;|&nbsp; <b>Generated:</b> {today_str}",
         styles["subtitle"]
     ))
-    story.append(Spacer(1, 6))
-    story.append(HRFlowable(width="100%", thickness=1.5, color=ACCENT_INDIGO, spaceBefore=2, spaceAfter=10))
+    story.append(Spacer(1, 4))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=ACCENT_INDIGO, spaceBefore=2, spaceAfter=8))
 
     # 2. Executive Project Metrics Grid
     health = report.overall_health_score
@@ -451,18 +493,20 @@ def _build_zip_pdf_report(report: MultiFileReviewReport) -> BytesIO:
     gate_decision = "PASSED" if report.summary.critical == 0 and report.summary.high == 0 else "BLOCKED"
     gate_color = COLOR_PASSED if gate_decision == "PASSED" else COLOR_CRITICAL
 
+    card_label_style = ParagraphStyle("CardLabelProj", parent=styles["td_center"], fontName="Helvetica-Bold", textColor=colors.HexColor("#475569"))
+
     metrics_data = [
         [
-            Paragraph("<b>Project Health Score</b>", styles["body"]),
-            Paragraph("<b>Merge Gate Decision</b>", styles["body"]),
-            Paragraph("<b>Files Scanned / Clean</b>", styles["body"]),
-            Paragraph("<b>Total Issues Flagged</b>", styles["body"]),
+            Paragraph("Project Health Score", card_label_style),
+            Paragraph("Merge Gate Decision", card_label_style),
+            Paragraph("Files Scanned / Clean", card_label_style),
+            Paragraph("Total Issues Flagged", card_label_style),
         ],
         [
-            Paragraph(f"<font size=15 color='{health_color.hexval()}'><b>{health} / 100</b></font>", styles["body"]),
-            Paragraph(f"<font size=13 color='{gate_color.hexval()}'><b>{gate_decision}</b></font>", styles["body"]),
-            Paragraph(f"<font size=13 color='{PRIMARY_COLOR.hexval()}'><b>{report.summary.total_files_scanned}</b> ({report.summary.clean_files_count} clean)</font>", styles["body"]),
-            Paragraph(f"<font size=15 color='{PRIMARY_COLOR.hexval()}'><b>{report.summary.total_findings}</b></font>", styles["body"]),
+            Paragraph(f"<font size=14 color='{health_color.hexval()}'><b>{health} / 100</b></font>", styles["td_center"]),
+            Paragraph(f"<font size=12 color='{gate_color.hexval()}'><b>{gate_decision}</b></font>", styles["td_center"]),
+            Paragraph(f"<font size=12 color='{PRIMARY_COLOR.hexval()}'><b>{report.summary.total_files_scanned}</b> ({report.summary.clean_files_count} clean)</font>", styles["td_center"]),
+            Paragraph(f"<font size=14 color='{PRIMARY_COLOR.hexval()}'><b>{report.summary.total_findings}</b></font>", styles["td_center"]),
         ],
     ]
 
@@ -473,51 +517,59 @@ def _build_zip_pdf_report(report: MultiFileReviewReport) -> BytesIO:
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
         ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#CBD5E1")),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
     ]))
     story.append(metrics_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 8))
 
-    # 3. File Inventory Summary Table
+    # 3. File Inventory Summary Table (All cells wrapped in Paragraphs)
     story.append(Paragraph(f"Repository File Inventory & Health ({len(report.files)} Files)", styles["section"]))
 
     file_table_data = [
-        ["File Path", "Lang", "LOC", "Health", "Status", "Critical", "High", "Med", "Low"]
+        [
+            Paragraph("File Path", styles["th"]),
+            Paragraph("Lang", styles["th_center"]),
+            Paragraph("LOC", styles["th_center"]),
+            Paragraph("Health", styles["th_center"]),
+            Paragraph("Status", styles["th_center"]),
+            Paragraph("Crit", styles["th_center"]),
+            Paragraph("High", styles["th_center"]),
+            Paragraph("Med", styles["th_center"]),
+            Paragraph("Low", styles["th_center"]),
+        ]
     ]
 
     for f in report.files:
         status_text = "PASSED" if f.overall_severity == "low" and f.health_score >= 90 else f.overall_severity.upper()
         status_color = COLOR_PASSED if status_text == "PASSED" else COLOR_CRITICAL if status_text == "CRITICAL" else COLOR_MEDIUM
         file_table_data.append([
-            f.file_path,
-            f.language.upper(),
-            str(f.lines_of_code),
-            f"{f.health_score}%",
-            status_text,
-            str(f.summary.critical),
-            str(f.summary.high),
-            str(f.summary.medium),
-            str(f.summary.low),
+            Paragraph(f"<font size=7><b>{f.file_path}</b></font>", styles["td"]),
+            Paragraph(f.language.upper(), styles["td_center"]),
+            Paragraph(str(f.lines_of_code), styles["td_center"]),
+            Paragraph(f"{f.health_score}%", styles["td_center"]),
+            Paragraph(f"<font color='{status_color.hexval()}'><b>{status_text}</b></font>", styles["td_center"]),
+            Paragraph(str(f.summary.critical), styles["td_center"]),
+            Paragraph(str(f.summary.high), styles["td_center"]),
+            Paragraph(str(f.summary.medium), styles["td_center"]),
+            Paragraph(str(f.summary.low), styles["td_center"]),
         ])
 
-    file_table = Table(file_table_data, colWidths=[180, 45, 45, 50, 60, 40, 40, 40, 40])
+    # Col widths sum = 180 + 40 + 40 + 50 + 60 + 35 + 45 + 45 + 45 = 540 pt
+    file_table = Table(file_table_data, colWidths=[180, 40, 40, 50, 60, 35, 45, 45, 45])
     file_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), PRIMARY_COLOR),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 7.5),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, BG_LIGHT]),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
         ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#94A3B8")),
-        ('TOPPADDING', (0, 0), (-1, -1), 3.5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
     ]))
     story.append(file_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 8))
 
     # 4. Detailed Finding Highlights across files
     total_findings_list = []

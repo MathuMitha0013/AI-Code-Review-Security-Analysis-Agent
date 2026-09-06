@@ -81,3 +81,61 @@ def test_export_pdf_report_empty_findings():
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
     assert response.content.startswith(b"%PDF-")
+
+
+def test_export_zip_pdf_report():
+    """Verifies that POST /api/report/zip-pdf generates multi-file project audit PDF."""
+    payload = {
+        "archive_name": "test_repo.zip",
+        "overall_health_score": 75,
+        "overall_severity": "high",
+        "summary": {
+            "total_files_scanned": 1,
+            "total_lines_of_code": 45,
+            "clean_files_count": 0,
+            "vulnerable_files_count": 1,
+            "python_files_count": 0,
+            "java_files_count": 1,
+            "total_findings": 1,
+            "critical": 0,
+            "high": 1,
+            "medium": 0,
+            "low": 0
+        },
+        "files": [
+            {
+                "file_path": "src/main/App.java",
+                "language": "java",
+                "lines_of_code": 45,
+                "health_score": 75,
+                "overall_severity": "high",
+                "findings": [
+                    {
+                        "title": "Hardcoded Secret",
+                        "category": "security",
+                        "source_agent": "security",
+                        "severity": "high",
+                        "line": 10,
+                        "description": "Hardcoded API key detected in source code.",
+                        "rule_id": "SEC-JV-001"
+                    }
+                ],
+                "summary": {
+                    "total_findings": 1,
+                    "critical": 0,
+                    "high": 1,
+                    "medium": 0,
+                    "low": 0,
+                    "code_analysis_findings": 0,
+                    "security_findings": 1,
+                    "duplicates_removed": 0
+                }
+            }
+        ],
+        "skipped_files": []
+    }
+    response = client.post("/api/report/zip-pdf", json=payload)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.content.startswith(b"%PDF-")
+
