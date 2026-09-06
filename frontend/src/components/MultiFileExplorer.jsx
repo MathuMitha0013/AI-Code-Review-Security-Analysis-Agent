@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import FindingItem from './FindingItem'
+import { exportZipPdfReport } from '../services/api'
 
 export default function MultiFileExplorer({
   zipReport,
@@ -11,10 +12,36 @@ export default function MultiFileExplorer({
   const [filterLang, setFilterLang] = useState('all') // 'all' | 'python' | 'java'
   const [filterStatus, setFilterStatus] = useState('all') // 'all' | 'vulnerable' | 'clean'
   const [searchQuery, setSearchQuery] = useState('')
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
 
   if (!zipReport) return null
 
   const { summary, files = [], skipped_files = [], archive_name, overall_health_score, overall_severity } = zipReport
+
+  const handleExportZipPDF = async () => {
+    setIsExportingPdf(true)
+    try {
+      await exportZipPdfReport(zipReport)
+    } catch (err) {
+      console.error(err)
+      alert(err.message || 'Failed to export project PDF report.')
+    } finally {
+      setIsExportingPdf(false)
+    }
+  }
+
+  const handleExportZipJSON = () => {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+    const blob = new Blob([JSON.stringify(zipReport, null, 2)], { type: 'application/json;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `secoria_project_audit_${(archive_name || 'project').replace('.zip', '')}_${timestamp}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
 
   // Filter files list
   const filteredFiles = files.filter((file) => {
@@ -99,7 +126,33 @@ export default function MultiFileExplorer({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={handleExportZipPDF}
+              disabled={isExportingPdf}
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-bold shadow-md shadow-rose-500/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Download executive project-wide PDF audit report"
+            >
+              {isExportingPdf ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  <span>Generating PDF...</span>
+                </>
+              ) : (
+                <>
+                  <span>📄 Project PDF</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleExportZipJSON}
+              className="px-3.5 py-2 rounded-xl bg-[var(--color-bg-subtle)] hover:bg-slate-700/50 border border-[var(--color-border)] hover:border-amber-500/40 text-amber-400 text-xs font-bold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Download complete project audit JSON export"
+            >
+              <span>📊 Project JSON</span>
+            </button>
+
             <div className="text-right px-4 py-2 rounded-2xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)] shadow-xs">
               <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--color-text-secondary)] block">
                 Repository Score

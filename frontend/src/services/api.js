@@ -243,6 +243,41 @@ export async function exportPdfReport(report) {
 }
 
 /**
+ * Downloads a project-wide executive PDF report for a multi-file ZIP archive.
+ *
+ * @param {Object} zipReport The complete MultiFileReviewReport object
+ * @returns {Promise<void>} Triggers browser file download
+ */
+export async function exportZipPdfReport(zipReport) {
+  const response = await fetch(`${API_BASE_URL}/api/report/zip-pdf`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(zipReport),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}))
+    throw new Error(
+      errorBody.detail || `Project PDF export failed with status ${response.status}`
+    )
+  }
+
+  const blob = await response.blob()
+  const downloadUrl = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = downloadUrl
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+  const archiveClean = (zipReport.archive_name || 'project').replace('.zip', '')
+  link.download = `secoria_project_audit_${archiveClean}_${timestamp}.pdf`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(downloadUrl)
+}
+
+/**
  * Auto-remediates the entire codebase in one click, resolving all findings
  * and producing clean source code with a changelog and projected score.
  *
