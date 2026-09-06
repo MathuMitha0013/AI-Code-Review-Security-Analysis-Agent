@@ -67,6 +67,7 @@ export default function GitHubPRModal({ isOpen, onClose, onLoadCodeToEditor }) {
   const [reviewResult, setReviewResult] = useState(null)
   const [copied, setCopied] = useState(false)
   const [copiedSuggestionIdx, setCopiedSuggestionIdx] = useState(null)
+  const [showGuide, setShowGuide] = useState(true)
 
   if (!isOpen) return null
 
@@ -98,14 +99,6 @@ export default function GitHubPRModal({ isOpen, onClose, onLoadCodeToEditor }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleLoadFirstFile = () => {
-    if (reviewResult?.files_reviewed?.[0]?.findings?.length && onLoadCodeToEditor) {
-      const firstFile = reviewResult.files_reviewed[0]
-      onLoadCodeToEditor(diffText, firstFile.language)
-      onClose()
-    }
-  }
-
   const diffLineCount = diffText ? diffText.split('\n').length : 0
 
   return (
@@ -113,7 +106,7 @@ export default function GitHubPRModal({ isOpen, onClose, onLoadCodeToEditor }) {
       <div className="relative w-full max-w-5xl max-h-[92vh] flex flex-col rounded-3xl border border-white/10 bg-[#0b0f19] shadow-[0_0_50px_rgba(79,70,229,0.18)] overflow-hidden transition-all text-slate-100">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/10 bg-[#0f172a]/95 backdrop-blur-md">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#0f172a]/95 backdrop-blur-md">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 p-0.5 shadow-lg shadow-indigo-500/25">
               <div className="w-full h-full rounded-[14px] bg-[#0b0f19] flex items-center justify-center text-indigo-400">
@@ -123,14 +116,17 @@ export default function GitHubPRModal({ isOpen, onClose, onLoadCodeToEditor }) {
               </div>
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
-                GitHub PR Review Bot
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shadow-xs">
-                  Automated Security Gate
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-extrabold text-white">GitHub PR Review Bot</h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  🐍 Python (.py)
                 </span>
-              </h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                  ☕ Java (.java)
+                </span>
+              </div>
               <p className="text-xs text-slate-400 font-medium">
-                Inspect Pull Requests, verify code security, and generate inline annotations
+                Automated security inspection for Pull Requests with OWASP checks & line annotations
               </p>
             </div>
           </div>
@@ -139,6 +135,7 @@ export default function GitHubPRModal({ isOpen, onClose, onLoadCodeToEditor }) {
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
             aria-label="Close modal"
+            title="Close PR Reviewer (Esc)"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -146,11 +143,64 @@ export default function GitHubPRModal({ isOpen, onClose, onLoadCodeToEditor }) {
           </button>
         </div>
 
+        {/* Interactive "How to Use" Guide Card */}
+        <div className="px-6 pt-3 pb-2 bg-[#0b0f19] border-b border-white/5">
+          <div className="rounded-2xl border border-indigo-500/25 bg-indigo-950/25 p-3 text-xs transition-all">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base">💡</span>
+                <span className="font-bold text-indigo-200">How to Use & Supported Languages Guide</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">
+                  Python & Java Only
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGuide(!showGuide)}
+                className="text-[11px] font-bold text-indigo-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                title={showGuide ? "Hide detailed instructions" : "Show detailed instructions"}
+              >
+                <span>{showGuide ? 'Hide Instructions ▲' : 'Show Instructions ▼'}</span>
+              </button>
+            </div>
+
+            {showGuide && (
+              <div className="mt-2.5 pt-2.5 border-t border-indigo-500/20 space-y-2 text-slate-300 animate-fadeIn">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-[#080d1a] border border-white/5 space-y-1">
+                    <div className="font-bold text-indigo-300 flex items-center gap-1.5 text-xs">
+                      <span>📝</span> Option 1: Git Diff Simulator (Fastest)
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Paste output from <code className="text-indigo-300 font-mono">git diff</code> or click any quick preset button below to test vulnerabilities without needing an active GitHub repository.
+                    </p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-[#080d1a] border border-white/5 space-y-1">
+                    <div className="font-bold text-indigo-300 flex items-center gap-1.5 text-xs">
+                      <span>🔗</span> Option 2: Live GitHub PR URL
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Paste a GitHub Pull Request link (e.g. <code className="text-indigo-300 font-mono">https://github.com/owner/repo/pull/1</code>). Secoria fetches all modified files and scans them online.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
+                  <span className="text-emerald-400 font-bold">🛡️ Supported Formats:</span>
+                  <span>Scans all <strong className="text-emerald-300">.py</strong> and <strong className="text-amber-300">.java</strong> files for OWASP Top 10 vulnerabilities, CWEs, and secrets. Other files (.md, .json) are safely skipped.</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Tab Navigation Segmented Bar */}
-        <div className="px-6 pt-4 pb-2 border-b border-white/5 bg-[#0b0f19]">
+        <div className="px-6 pt-3 pb-2 border-b border-white/5 bg-[#0b0f19]">
           <div className="inline-flex rounded-2xl border border-white/10 p-1 bg-[#060913] shadow-inner">
             <button
               onClick={() => setActiveTab('diff')}
+              title="Test code changes with raw git diff patches or demo presets"
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'diff'
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/30 scale-[1.02]'
@@ -161,6 +211,7 @@ export default function GitHubPRModal({ isOpen, onClose, onLoadCodeToEditor }) {
             </button>
             <button
               onClick={() => setActiveTab('url')}
+              title="Inspect a live Pull Request directly from GitHub by URL"
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'url'
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/30 scale-[1.02]'
@@ -193,24 +244,28 @@ export default function GitHubPRModal({ isOpen, onClose, onLoadCodeToEditor }) {
                 <div className="flex items-center flex-wrap gap-2">
                   <button
                     onClick={() => setDiffText(SAMPLE_VULNERABLE_DIFF)}
+                    title="Load a Python diff with SQL Injection, Command Injection & Hardcoded API Secret"
                     className="px-3 py-1.5 text-xs font-bold rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.12)] transition-all hover:scale-105 cursor-pointer"
                   >
                     🚨 Vulnerable Python
                   </button>
                   <button
                     onClick={() => setDiffText(SAMPLE_JAVA_DIFF)}
+                    title="Load a Java diff with Insecure ObjectInputStream Deserialization & Hardcoded JWT Secret"
                     className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.12)] transition-all hover:scale-105 cursor-pointer"
                   >
                     ☕ Java Vulnerable
                   </button>
                   <button
                     onClick={() => setDiffText(SAMPLE_MULTIFILE_DIFF)}
+                    title="Load a multi-file diff reviewing both auth.py and query.py changes"
                     className="px-3 py-1.5 text-xs font-bold rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 hover:border-sky-500/50 shadow-[0_0_12px_rgba(14,165,233,0.12)] transition-all hover:scale-105 cursor-pointer"
                   >
                     📂 Multi-File PR
                   </button>
                   <button
                     onClick={() => setDiffText(SAMPLE_CLEAN_DIFF)}
+                    title="Load a safe, clean Python diff using environment variables and parameterized SQL queries"
                     className="px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.12)] transition-all hover:scale-105 cursor-pointer"
                   >
                     ✅ Clean PR
