@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import defaultDemoVideo from '../assets/Screen Recording 2026-09-04 220906.mp4'
+
+const defaultDemoVideo = '/demo-video.mp4'
 
 export default function DemoVideoModal({ isOpen, onClose, onLaunchApp }) {
   const [activeTab, setActiveTab] = useState('tour') // 'tour' | 'video'
