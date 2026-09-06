@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import defaultDemoVideo from '../assets/Screen Recording 2026-09-04 220906.mp4'
 
 export default function DemoVideoModal({ isOpen, onClose, onLaunchApp }) {
   const [activeTab, setActiveTab] = useState('tour') // 'tour' | 'video'
   const [currentChapter, setCurrentChapter] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
   const [progress, setProgress] = useState(0)
-  const [customVideoUrl, setCustomVideoUrl] = useState('')
+  const [customVideoUrl, setCustomVideoUrl] = useState(defaultDemoVideo)
   const [inputUrl, setInputUrl] = useState('')
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
 

@@ -7,5 +7,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173, // must match backend/app/core/config.py BACKEND_CORS_ORIGINS
+    watch: {
+      ignored: ['**/*.mp4', '**/*.webm', '**/*.avi', '**/*.mov', '**/*.zip', '**/node_modules/**'],
+    },
   },
 })
