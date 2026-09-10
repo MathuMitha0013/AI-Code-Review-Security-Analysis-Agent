@@ -41,13 +41,57 @@
 
 ---
 
-Secoria is an intelligent, multi-agent cybersecurity platform that automates source code reviews for quality defects, cyclomatic/cognitive complexity, and OWASP Top 10 security vulnerabilities. It combines abstract syntax tree (AST) static analysis with multi-tier Large Language Model (LLM) agents and an offline Retrieval-Augmented Generation (RAG) vector database to deliver instant code audits, 1-click refactoring diffs, interactive multi-file project analysis, executive PDF reports with SLA resolution matrices, and automated GitHub Pull Request reviews.
+## 🎯 Project Overview & Problem Statement
+
+### Problem Statement
+Software development teams frequently struggle with inconsistent code quality, undetected security vulnerabilities, and time-consuming manual code reviews. Developers often lack immediate access to expert guidance on secure coding practices, design principles, and vulnerability remediation during active development. Manual code reviews are slow, subjective, and unable to scale with growing codebases — leaving critical security risks and quality issues undetected until late in the development lifecycle.
+
+### Project Objective
+To develop an **AI Code Review & Security Analysis Agent** — an intelligent multi-agent platform that automatically analyzes source code for quality issues, security vulnerabilities, and best practice violations. A developer pastes code directly or uploads source files in Python or Java; a multi-agent pipeline triggers automatically:
+- A **Code Analysis Agent** reviews code structure, detects code smells, and identifies design issues.
+- A **Security Vulnerability Agent** scans for OWASP-standard vulnerabilities (SQLi, Command Injection, XSS, CSRF, hardcoded secrets, insecure deserialization, weak crypto).
+- A **Remediation Agent** generates specific fix recommendations with corrected code examples.
+- A **PR Summary Agent** produces a human-readable review summary.
+- A **Conversational Code Assistant** provides RAG-powered Q&A grounded in an indexed secure coding knowledge base.
+- An interactive developer portal presents severity-scored findings, remediation guidance, and exportable review reports.
+
+### Key Project Outcomes
+1. **Automated Multi-Agent Pipeline**: Concurrently analyzes Python and Java code for quality, security, and best practice violations.
+2. **OWASP-Standard Vulnerability Detection**: Identifies CWEs with severity scoring and location-specific flagging.
+3. **Actionable Remediation & Refactoring**: Generates corrected code examples and 1-click refactoring diffs.
+4. **RAG-Powered Conversational Assistant**: Answers follow-up queries grounded in ChromaDB vector store (306 chunks).
+5. **Structured Audit Reports**: Produces executive PDF reports with SLA resolution matrices, HTML, JSON, Markdown, and CSV exports.
+
+---
+
+## 🤖 Agents & Core Modules
+
+### Implemented Agents
+| Agent | Role & Responsibility | Implementation |
+|---|---|---|
+| **1. Code Analysis Agent** | Reviews structure, detects code smells, cyclomatic/cognitive complexity, God Objects | `ast`, `radon`, `javalang` AST parsers |
+| **2. Security Vulnerability Agent** | Scans for OWASP Top 10 vulnerabilities (SQLi, Command Injection, Secrets, Weak Crypto) | Rule matchers, CWE mappings, Regex |
+| **3. Remediation Agent** | Generates specific fix recommendations, corrected code diffs, best practice guidance | Groq Llama 3.3/Qwen + AST validation |
+| **4. PR Summary Agent** | Compiles all findings into structured, human-readable Pull Request review summaries | Markdown comment generator |
+| **5. Conversational Code Assistant** | RAG-powered Q&A grounded in secure coding knowledge base with source citations | ChromaDB vector store (306 chunks) |
+
+### Implemented Modules
+| Module | Scope |
+|---|---|
+| **1. Code Submission Module** | Direct paste & file upload for Python and Java with pre-execution syntax validation |
+| **2. Secure Coding Knowledge Base & RAG** | Offline ChromaDB vector database embedding 10 OWASP standard documents + 5 cheat sheets |
+| **3. Multi-Agent Orchestration Pipeline** | Parallel async execution (`asyncio.gather`), deduplication, and 0–100 Code Health Scoring |
+| **4. Findings Display & Severity Scoring** | Developer portal with severity cards, category filters, health gauge, and code comparisons |
+| **5. Conversational Assistant Interface** | Floating chat drawer with Markdown formatting, code copy/download, and citation badges |
+| **6. Report Generation & Export Module** | Multi-Format Export Hub (Executive 2-pass PDF with SLA matrix, HTML, JSON, Markdown, CSV) |
 
 ---
 
 ## 📑 Table of Contents
 
 - [Milestone Progress](#-milestone-progress)
+- [Project Overview & Problem Statement](#-project-overview--problem-statement)
+- [Agents & Core Modules](#-agents--core-modules)
 - [Key Capabilities](#-key-capabilities)
 - [Multi-Agent Architecture](#-multi-agent-architecture)
 - [Interactive Features & Components](#-interactive-features--components)
