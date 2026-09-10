@@ -1,11 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import ThemeToggle from './ThemeToggle'
-import DemoVideoModal from './DemoVideoModal'
 import logoDark from '../assets/logo-dark.png'
 
 export default function LandingPage({ onLaunchApp, onSelectSample, onOpenZipModal }) {
-  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false)
-
   const agents = [
     {
       id: 'code-analysis',
@@ -142,14 +139,7 @@ export default function LandingPage({ onLaunchApp, onSelectSample, onOpenZipModa
           </div>
 
           <div className="flex items-center gap-6">
-            <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-[var(--color-text-secondary)]">
-              <button
-                onClick={() => setIsDemoModalOpen(true)}
-                className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1.5 cursor-pointer font-bold text-indigo-600 dark:text-indigo-400"
-              >
-                <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
-                <span>Demo Video</span>
-              </button>
+            <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-[var(--color-text-secondary)]">
               <a href="#agents" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Architecture</a>
               <a href="#workflow" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Workflow</a>
               <a href="#demo-samples" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Demo Samples</a>
@@ -238,16 +228,6 @@ export default function LandingPage({ onLaunchApp, onSelectSample, onOpenZipModa
               </svg>
               <span>Launch Live Code Reviewer</span>
             </button>
-            
-            <button
-              onClick={() => setIsDemoModalOpen(true)}
-              className="inline-flex items-center gap-2.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 px-7 py-4 text-base font-bold shadow-lg shadow-rose-500/15 transition-all duration-200 hover:scale-105 cursor-pointer"
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white text-xs shadow-xs">
-                ▶
-              </span>
-              <span>Watch Demo Video</span>
-            </button>
 
             {onOpenZipModal && (
               <button
@@ -333,73 +313,6 @@ export default function LandingPage({ onLaunchApp, onSelectSample, onOpenZipModa
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 3.5. Interactive Demo Video & Platform Showcase */}
-      <section id="demo-video" className="py-16 bg-gradient-to-b from-transparent via-indigo-950/20 to-transparent">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="relative rounded-3xl border border-indigo-500/30 bg-[var(--color-surface)] p-8 sm:p-12 shadow-2xl shadow-indigo-500/10 overflow-hidden">
-            {/* Ambient Background Glow */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-indigo-500/20 via-purple-500/15 to-transparent rounded-full blur-3xl pointer-events-none -z-0" />
-            
-            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
-              <div className="space-y-4 max-w-xl text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400">
-                  <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-                  <span>Interactive Product Tour</span>
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-black text-[var(--color-text-primary)] leading-tight">
-                  See Secoria's Multi-Agent Pipeline in Action
-                </h2>
-
-                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed font-medium">
-                  Watch how Secoria concurrently scans code for OWASP Top 10 vulnerabilities, executes 1-click AST-validated auto-remediation, exports executive PDF audit reports, and automates GitHub Pull Request code reviews.
-                </p>
-
-                {/* Feature highlight tags */}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                    ⚡ Real-Time OWASP Scan
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    🛠️ 1-Click Auto Remediation
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                    📄 Executive PDF Reports
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                    🤖 GitHub PR Review Bot
-                  </span>
-                </div>
-              </div>
-
-              {/* Interactive Video Play Trigger Card */}
-              <div className="shrink-0 w-full lg:w-auto">
-                <div
-                  onClick={() => setIsDemoModalOpen(true)}
-                  className="group relative cursor-pointer rounded-2xl border-2 border-indigo-500/40 bg-slate-950 p-6 sm:p-8 text-center shadow-xl transition-all duration-300 hover:border-indigo-500 hover:scale-105 hover:shadow-indigo-500/25"
-                >
-                  <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-rose-600 text-white shadow-lg shadow-indigo-500/40 group-hover:scale-110 transition-transform">
-                    <svg className="h-9 w-9 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                    <span className="absolute -inset-1 rounded-3xl bg-indigo-500/40 blur-sm group-hover:blur-md transition-all -z-10 animate-pulse" />
-                  </div>
-
-                  <div className="mt-4">
-                    <div className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">
-                      Watch Interactive Platform Tour
-                    </div>
-                    <div className="text-xs text-slate-400 mt-0.5">
-                      4 Chapters • Interactive Simulator & Video
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -626,13 +539,6 @@ export default function LandingPage({ onLaunchApp, onSelectSample, onOpenZipModa
           </div>
         </div>
       </footer>
-
-      {/* Interactive Platform Demo & Video Modal */}
-      <DemoVideoModal
-        isOpen={isDemoModalOpen}
-        onClose={() => setIsDemoModalOpen(false)}
-        onLaunchApp={onLaunchApp}
-      />
     </div>
   )
 }
