@@ -22,35 +22,35 @@
   --color-brand: #4f46e5;          /* Indigo 600 */
   --color-brand-hover: #4338ca;    /* Indigo 700 */
   --color-brand-light: #eef2ff;    /* Indigo 50 */
-  --color-brand-glow: rgba(79, 70, 229, 0.14);
+  --color-brand-glow: rgba(79, 70, 229, 0.18);
 
   --color-success: #059669;        /* Emerald 600 */
   --color-warning: #d97706;        /* Amber 600 */
   --color-danger: #e11d48;         /* Rose 600 */
   --color-info: #0284c7;           /* Sky 600 */
 
-  /* Light Theme Tokens — Crisp, Clean, High-Contrast */
-  --color-bg: #f8fafc;             /* Slate 50 with gradient haze */
+  /* Light Theme Tokens — Crisp, Clean, Rich Visual Hierarchy */
+  --color-bg: #f8fafc;             /* Slate 50 with luminous radial glow */
   --color-bg-subtle: #f1f5f9;      /* Slate 100 */
-  --color-surface: #ffffff;         /* Pure white elevation */
+  --color-surface: #ffffff;        /* Pure white elevation */
   --color-surface-raised: #ffffff;
   --color-border: #e2e8f0;         /* Slate 200 */
   --color-border-subtle: #f1f5f9;
-  --color-text-primary: #0f172a;   /* Slate 900 */
-  --color-text-secondary: #475569; /* Slate 600 for crisp readability */
-  --color-text-muted: #94a3b8;     /* Slate 400 */
+  --color-text-primary: #0f172a;   /* Slate 900 — Maximum readability */
+  --color-text-secondary: #334155; /* Slate 700 — Sharp readable text */
+  --color-text-muted: #64748b;     /* Slate 500 */
 
-  --card-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
-  --card-shadow-hover: 0 16px 32px -4px rgba(79, 70, 229, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 10px 25px -5px rgba(99, 102, 241, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --card-shadow-hover: 0 20px 35px -5px rgba(99, 102, 241, 0.16), 0 10px 15px -5px rgba(15, 23, 42, 0.06);
 
   /* Light Mode Syntax Highlighting */
-  --syntax-keyword: #cf222e;
-  --syntax-string: #0a3069;
-  --syntax-comment: #6e7781;
-  --syntax-function: #8250df;
-  --syntax-number: #0550ae;
-  --syntax-operator: #24292f;
-  --syntax-bg: #f6f8fa;
+  --syntax-keyword: #7c3aed;
+  --syntax-string: #059669;
+  --syntax-comment: #64748b;
+  --syntax-function: #2563eb;
+  --syntax-number: #ea580c;
+  --syntax-operator: #0f172a;
+  --syntax-bg: #f8fafc;
 }
 
 .dark {
@@ -113,15 +113,23 @@ code, pre, .font-mono {
 
 /* Grid Matrix Background Pattern */
 .bg-grid-matrix {
-  background-size: 40px 40px;
+  background-color: #f8fafc;
   background-image: 
-    linear-gradient(to right, rgba(99, 102, 241, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(99, 102, 241, 0.06) 1px, transparent 1px);
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.08) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(59, 130, 246, 0.04) 0px, transparent 60%),
+    linear-gradient(to right, rgba(99, 102, 241, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.045) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px;
 }
 .dark .bg-grid-matrix {
+  background-color: #090d16;
   background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
     linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
 }
 
 /* ==========================================================================
@@ -207,12 +215,27 @@ code, pre, .font-mono {
   to { transform: rotate(360deg); }
 }
 
+@keyframes chatbot-float {
+  0%, 100% {
+    transform: translateY(0px);
+    filter: drop-shadow(0 8px 16px rgba(99, 102, 241, 0.35));
+  }
+  50% {
+    transform: translateY(-6px);
+    filter: drop-shadow(0 14px 24px rgba(99, 102, 241, 0.55));
+  }
+}
+
 .animate-float {
   animation: float 4.5s ease-in-out infinite;
 }
 
 .animate-float-slow {
   animation: float-slow 7s ease-in-out infinite;
+}
+
+.animate-chatbot-float {
+  animation: chatbot-float 3s ease-in-out infinite;
 }
 
 .animate-pulse-glow {

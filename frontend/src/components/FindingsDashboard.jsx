@@ -259,6 +259,21 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
     setTimeout(() => setCopiedSummary(false), 2000)
   }
 
+  const handleDownloadFullCleanCode = () => {
+    if (!fullCode) return
+    const isJava = (report?.language || '').toLowerCase() === 'java'
+    const filename = isJava ? 'Clean_Application.java' : 'clean_main.py'
+    const blob = new Blob([fullCode], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   const filteredFindings = useMemo(() => {
     if (!report) return []
     let result = report.findings.filter((f) => activeSeverities.has(f.severity))
@@ -591,6 +606,19 @@ export default function FindingsDashboard({ report, isLoading, error, fullCode, 
               <div className="text-3xl mb-2 animate-bounce">🎉</div>
               <h4 className="text-base font-bold text-emerald-500">Perfect Health Score (100/100)</h4>
               <p className="mt-1 text-xs text-[var(--color-text-secondary)]">No quality smells or OWASP vulnerabilities detected in the submitted code.</p>
+              {fullCode && (
+                <div className="mt-4">
+                  <button
+                    onClick={handleDownloadFullCleanCode}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-500/25 hover:scale-105 transition-all cursor-pointer"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>Download Verified Clean Code ({language === 'java' ? 'Application.java' : 'main.py'})</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : filteredFindings.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--color-border)] p-6 text-center text-sm text-[var(--color-text-secondary)]">

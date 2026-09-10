@@ -93,6 +93,26 @@ export default function FindingItem({ finding, fullCode, language, onAskAssistan
     })
   }
 
+  function handleDownloadFix() {
+    if (!remediation?.fixed_code) return
+    const isJava = language?.toLowerCase() === 'java'
+    const ext = isJava ? 'java' : 'py'
+    const safeTitle = (finding.title || 'fixed_snippet')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .slice(0, 30)
+    const filename = `${safeTitle}_fix.${ext}`
+    const blob = new Blob([remediation.fixed_code], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   const highlightedCodeHtml = remediation
     ? Prism.highlight(
         remediation.fixed_code,
@@ -200,12 +220,24 @@ export default function FindingItem({ finding, fullCode, language, onAskAssistan
             <span className={`rounded-full border px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider ${recType.badge}`}>
               {recType.label}
             </span>
-            <button
-              onClick={handleCopyFix}
-              className="inline-flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
-            >
-              {copied ? '✓ Copied' : 'Copy Corrected Code'}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleCopyFix}
+                className="inline-flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+              >
+                {copied ? '✓ Copied' : '📋 Copy Fix'}
+              </button>
+              <button
+                onClick={handleDownloadFix}
+                className="inline-flex items-center gap-1 text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer"
+                title="Download this corrected code snippet"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Download Fix</span>
+              </button>
+            </div>
           </div>
 
           {/* Explanation */}

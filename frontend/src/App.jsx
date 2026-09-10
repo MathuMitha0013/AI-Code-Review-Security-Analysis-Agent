@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import CodeEditor from './components/CodeEditor'
 import FileUpload from './components/FileUpload'
 import FindingsDashboard from './components/FindingsDashboard'
@@ -182,6 +182,27 @@ export default function App() {
   const [isZipModalOpen, setIsZipModalOpen] = useState(false)
   const [zipReport, setZipReport] = useState(null)
 
+  // Scroll notification & section ref for review results
+  const [scrollToast, setScrollToast] = useState(null)
+  const resultsRef = useRef(null)
+
+  // Guarantee pop-up notification stays visible for at least 5 seconds
+  useEffect(() => {
+    if (!scrollToast) return
+
+    const timer = setTimeout(() => {
+      setScrollToast(null)
+    }, 5000)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [scrollToast])
+
+  const scrollToResults = () => {
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const canSubmit = mode === 'paste' ? code.trim().length > 0 : file !== null
   const hasResults = isReviewing || report !== null || reviewError !== null
 
@@ -189,6 +210,17 @@ export default function App() {
     setIsReviewing(true)
     setReviewError(null)
     setReport(null)
+    setScrollToast({
+      show: true,
+      type: 'reviewing',
+      message: 'Multi-agent analysis running! Scroll down to view the live inspection results ↓',
+    })
+
+    // Smooth auto-scroll toward results section
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 120)
+
     try {
       let codeText = ''
       if (mode === 'paste') {
@@ -202,8 +234,21 @@ export default function App() {
         setReport(response)
       }
       setSubmittedCode(codeText)
+      setScrollToast({
+        show: true,
+        type: 'completed',
+        message: 'Security inspection complete! Findings and remediation are ready below ↓',
+      })
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 150)
     } catch (err) {
       setReviewError(err.message)
+      setScrollToast({
+        show: true,
+        type: 'error',
+        message: 'Analysis encountered an issue. Scroll down to view error details ↓',
+      })
     } finally {
       setIsReviewing(false)
     }
@@ -220,6 +265,7 @@ export default function App() {
     setFile(null)
     setReport(null)
     setReviewError(null)
+    setScrollToast(null)
     setView('reviewer')
   }
 
@@ -248,6 +294,7 @@ export default function App() {
     setSubmittedCode('')
     setChatContext(null)
     setIsChatOpen(false)
+    setScrollToast(null)
   }
 
   function handleClear() {
@@ -258,6 +305,7 @@ export default function App() {
     setSubmittedCode('')
     setChatContext(null)
     setIsChatOpen(false)
+    setScrollToast(null)
   }
 
   const handleApplyCleanCode = async (cleanCode) => {
@@ -359,7 +407,7 @@ export default function App() {
                 <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
               </svg>
               <span>GitHub PR Bot</span>
-              <span className="hidden xl:inline text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">Py & Java</span>
+              <span className="hidden xl:inline text-[10px] px-1.5 py-0.5 rounded font-bold font-mono bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">Py &amp; Java</span>
             </button>
             <ThemeToggle />
           </div>
@@ -460,7 +508,7 @@ export default function App() {
 
             {/* Results section */}
             {hasResults && (
-              <div className="mt-10">
+              <div ref={resultsRef} className="mt-10 scroll-mt-6">
                 <FindingsDashboard
                   report={report}
                   isLoading={isReviewing}
@@ -474,6 +522,43 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* Floating Scroll Down Pop-up Notification */}
+      {scrollToast?.show && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-bounce-subtle max-w-[92vw] sm:max-w-md pointer-events-auto">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-900/95 dark:bg-slate-800/95 text-white backdrop-blur-xl border border-indigo-500/40 shadow-2xl shadow-indigo-500/30">
+            <span className="text-xl shrink-0 animate-pulse">
+              {scrollToast.type === 'completed' ? '🎯' : scrollToast.type === 'error' ? '⚠️' : '⏳'}
+            </span>
+            <div className="text-xs min-w-0 flex-1">
+              <p className="font-bold text-indigo-300">
+                {scrollToast.type === 'completed' ? 'Analysis Complete' : scrollToast.type === 'error' ? 'Analysis Notice' : 'Inspection Started'}
+              </p>
+              <p className="text-slate-300 font-medium truncate sm:whitespace-normal">
+                {scrollToast.message}
+              </p>
+            </div>
+            <button
+              onClick={scrollToResults}
+              className="shrink-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95"
+            >
+              <span>Scroll Down</span>
+              <svg className="w-3.5 h-3.5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setScrollToast(null)}
+              className="shrink-0 p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+              title="Dismiss notification"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* RAG Chat Sidebar (Milestone 3) */}
       <ChatSidebar
@@ -514,10 +599,11 @@ export default function App() {
             setChatContext(null)
             setIsChatOpen(true)
           }}
-          className="fixed bottom-6 right-6 p-4 bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 hover:from-indigo-500 hover:to-purple-600 text-white rounded-full shadow-2xl shadow-indigo-500/30 transition duration-200 hover:scale-110 z-40 cursor-pointer flex items-center justify-center border border-indigo-400/30"
+          className="fixed bottom-6 right-6 p-4 bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 hover:from-indigo-500 hover:to-purple-600 text-white rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-40 cursor-pointer flex items-center justify-center border border-indigo-400/30 animate-chatbot-float group"
           title="Open secure coding assistant"
+          aria-label="Open AI Security Chatbot"
         >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </button>

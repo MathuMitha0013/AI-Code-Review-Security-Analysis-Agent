@@ -43,6 +43,21 @@ export default function CodeEditor({ value, onChange, disabled }) {
     })
   }
 
+  function handleDownload() {
+    if (!value) return
+    const isJava = highlightLang === 'java'
+    const defaultName = isJava ? 'Application.java' : 'main.py'
+    const blob = new Blob([value], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = defaultName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   function handleClear() {
     if (onChange) {
       onChange('')
@@ -137,6 +152,20 @@ export default function CodeEditor({ value, onChange, disabled }) {
                 <span>Copy</span>
               </>
             )}
+          </button>
+
+          {/* Download button */}
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={!value}
+            title="Download source code file"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 dark:border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 shadow-xs transition-all hover:bg-emerald-100 dark:hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Download</span>
           </button>
         </div>
       </div>
