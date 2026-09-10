@@ -1,7 +1,7 @@
 # Secoria 🛡️
 
 **AI-Powered Code Review & Multi-File Security Analysis Platform**  
-*Enterprise Multi-Agent Static Analysis, OWASP Top 10 Vulnerability Detection & Automated Remediation for Python & Java*
+*Enterprise Multi-Agent Static Analysis, OWASP Top 10 Vulnerability Detection, 1-Click Auto-Remediation & Executive Audit Reporting for Python & Java*
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -9,9 +9,9 @@
 [![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-FF6F00?style=for-the-badge&logo=databricks&logoColor=white)](https://trychroma.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-86%20Passing-brightgreen?style=for-the-badge)](backend/tests/)
+[![Tests](https://img.shields.io/badge/Tests-87%20Passing%20(100%25)-brightgreen?style=for-the-badge)](backend/tests/)
 
-Secoria is an intelligent, multi-agent cybersecurity platform that automates source code reviews for quality defects, cyclomatic/cognitive complexity, and OWASP Top 10 security vulnerabilities. It combines abstract syntax tree (AST) static analysis with multi-tier Large Language Model (LLM) agents and an offline Retrieval-Augmented Generation (RAG) vector database to deliver instant code audits, 1-click refactoring diffs, interactive multi-file project analysis, and automated GitHub Pull Request reviews.
+Secoria is an intelligent, multi-agent cybersecurity platform that automates source code reviews for quality defects, cyclomatic/cognitive complexity, and OWASP Top 10 security vulnerabilities. It combines abstract syntax tree (AST) static analysis with multi-tier Large Language Model (LLM) agents and an offline Retrieval-Augmented Generation (RAG) vector database to deliver instant code audits, 1-click refactoring diffs, interactive multi-file project analysis, executive PDF reports with SLA resolution matrices, and automated GitHub Pull Request reviews.
 
 ---
 
@@ -22,10 +22,10 @@ Secoria is an intelligent, multi-agent cybersecurity platform that automates sou
 - [Interactive Features & Components](#-interactive-features--components)
   - [1. Single-File Code Review & Health Score](#1-single-file-code-review--health-score)
   - [2. Multi-File ZIP Project Scanner & Repository Explorer](#2-multi-file-zip-project-scanner--repository-explorer)
-  - [3. GitHub Pull Request Review Bot](#3-github-pull-request-review-bot)
-  - [4. 1-Click Auto-Remediation & Diff Comparator](#4-1-click-auto-remediation--diff-comparator)
-  - [5. RAG Conversational Security Assistant](#5-rag-conversational-security-assistant)
-  - [6. Executive PDF Report Exporter](#6-executive-pdf-report-exporter)
+  - [3. Multi-Format Report Export Hub (PDF, HTML, JSON, Markdown, CSV)](#3-multi-format-report-export-hub)
+  - [4. GitHub Pull Request Review Bot & CI/CD Gating](#4-github-pull-request-review-bot--cicd-gating)
+  - [5. 1-Click Auto-Remediation & Diff Comparator](#5-1-click-auto-remediation--diff-comparator)
+  - [6. RAG Conversational Security Assistant with Markdown Engine](#6-rag-conversational-security-assistant)
 - [System Architecture Diagram](#-system-architecture-diagram)
 - [Repository Structure](#-repository-structure)
 - [Tech Stack](#-tech-stack)
@@ -42,10 +42,10 @@ Secoria is an intelligent, multi-agent cybersecurity platform that automates sou
 - 🔍 **Polyglot Static & Semantic Analysis**: Full AST-level parsing and complexity checks for **Python** (`ast`, `radon`) and **Java 8+** (`javalang`).
 - 🛡️ **OWASP Top 10 & CWE Detection**: Identifies SQL Injections (CWE-89), Command Injections (CWE-78), Insecure Deserialization (CWE-502), Hardcoded Credentials (CWE-798), Weak Cryptography (CWE-327), Path Traversals (CWE-22), and XSS (CWE-79).
 - 📦 **Full-Project Multi-File ZIP Scanner**: Safely extracts, indexes, and conducts batch multi-agent scans across entire Python & Java codebases with Zip-Slip protection, project-wide metrics, and a tree-based file explorer.
-- 🤖 **GitHub PR Review Bot**: Simulates and automates full Pull Request code reviews, generating markdown reviews with actionable diffs, patch snippets, and risk summaries.
-- ⚡ **1-Click AI Auto-Remediation**: Instant generation of secure, refactored code with an interactive side-by-side visual diff modal.
-- 📚 **ChromaDB RAG Assistant**: Embedded offline knowledge base indexed with 306 OWASP Top 10 & security cheat-sheet chunks with exact page citations.
-- 📊 **Executive PDF Reports**: Generates downloadable, production-grade PDF audit reports with Health Score gauges and remediation roadmaps using `ReportLab`.
+- 📥 **Multi-Format Report Export Hub**: 5 export formats including executive 2-pass ReportLab PDF reports (with SLA resolution matrix & dynamic `Page X of Y` footers), standalone dark-mode HTML, DevSecOps JSON, Markdown, and CSV tabular spreadsheets.
+- 🤖 **GitHub PR Review Bot**: Parses unified git diffs directly from GitHub Pull Request URLs, generating line-by-line review comments and CI/CD merge gate verdicts.
+- ⚡ **1-Click AI Auto-Remediation**: Instant generation of AST-validated secure code with an interactive side-by-side visual diff modal.
+- 📚 **ChromaDB RAG Assistant**: Embedded offline knowledge base indexed with 306 OWASP Top 10 & security cheat-sheet chunks with exact page citations and syntax-highlighted Markdown responses.
 - 🔄 **Multi-Tier LLM Key Failover**: Resilient multi-provider routing across Google Gemini, Groq (Llama 3.3 / Qwen), local offline Ollama instances, and deterministic AST fallbacks.
 
 ---
@@ -87,10 +87,10 @@ Secoria orchestrates specialized agents concurrently via asynchronous dispatch (
           ┌───────────────────────────────┼───────────────────────────────┐
           ▼                               ▼                               ▼
 ┌───────────────────┐           ┌───────────────────┐           ┌───────────────────┐
-│ Remediation Agent │           │   RAG Assistant   │           │ PR & PDF Exporter │
-│ • 1-Click Fixes   │           │ • ChromaDB Search │           │ • GitHub PR Bot   │
-│ • Unified Diffs   │           │ • OWASP Citations │           │ • Binary PDF Docs │
-│ • AST Fallbacks   │           │ • Chat Context    │           │ • Markdown Alerts │
+│ Remediation Agent │           │   RAG Assistant   │           │ Report Export Hub │
+│ • 1-Click Fixes   │           │ • ChromaDB Search │           │ • Executive PDF   │
+│ • Unified Diffs   │           │ • OWASP Citations │           │ • HTML / JSON     │
+│ • AST Validation  │           │ • Markdown Format │           │ • Markdown / CSV  │
 └───────────────────┘           └───────────────────┘           └───────────────────┘
 ```
 
@@ -110,23 +110,27 @@ $$\text{Health Score} = \max\left(0, 100 - \sum \text{Severity Deductions}\right
 Upload an entire repository archive (`.zip`). Secoria features:
 - **Zip-Slip Traversal Prevention** & safe in-memory extraction.
 - **Polyglot Filtering**: Intelligently scans Python (`.py`) and Java (`.java`) files, including Windows Notepad text variants (`.py.txt`, `.java.txt`).
-- **Repository Explorer**: Tree navigation with file-level health badges, total lines of code (LOC), clean modules count, and 1-click in-context remediation.
-- **Built-in Test Packs**: One-click demo repositories for Multi-Tier Vulnerable Apps, Hardened Production Repos, and Java Security Audit suites.
+- **Repository Explorer**: Tree navigation with file-level health badges, total lines of code (LOC), clean modules count, project PDF exports, and 1-click in-context remediation.
 
-### 3. GitHub Pull Request Review Bot
-Connect webhooks or simulate PR reviews via `/api/github/simulate-pr-review`. Features:
-- Markdown summary of pull request changes.
-- Automated file-by-file review comments with unified diff recommendations.
-- Dynamic severity matrices and merge gating recommendations.
+### 3. Multi-Format Report Export Hub
+Download audit findings in 5 comprehensive formats:
+- 📄 **Executive PDF**: Professional 2-pass `ReportLab` document with running `Page X of Y` headers/footers, SLA resolution matrix, code snippets, and a 4-phase remediation roadmap.
+- 🌐 **Interactive Standalone HTML**: Client-side generated responsive report with embedded dark-mode styling and printable audit stylesheets.
+- ⚙️ **DevSecOps JSON**: Machine-readable payload for CI/CD artifact ingestion.
+- 📝 **GitHub Markdown (`.md`)**: Formatted PR checklist tables and severity summaries.
+- 📊 **CSV Spreadsheet**: Tabular findings export for Excel / Google Sheets analysis.
 
-### 4. 1-Click Auto-Remediation & Diff Comparator
-Click **"Auto-Remediate Code"** on any file or finding to generate secure code replacements. Inspect changes side-by-side with color-coded syntax diffs before applying them to the editor.
+### 4. GitHub Pull Request Review Bot & CI/CD Gating
+Paste any GitHub PR URL (e.g., `https://github.com/owner/repo/pull/12`) or simulate unified git diffs:
+- Automated line-by-line inline security comment recommendations.
+- Interactive "How to Use" guide and language compatibility tags (`.py` & `.java`).
+- CI/CD merge gating verdicts (`PASSED` or `BLOCKED`).
 
-### 5. RAG Conversational Security Assistant
-Chat with an offline AI assistant trained on 10 OWASP standard documents and 5 secure coding sheets (306 indexed vector chunks in ChromaDB). Every response includes exact source document citations and page numbers.
+### 5. 1-Click Auto-Remediation & Diff Comparator
+Click **"Auto-Remediate Code"** on any file or finding to generate secure code replacements. Inspect changes side-by-side with syntax-highlighted diffs before applying them directly into the editor with AST validation.
 
-### 6. Executive PDF Report Exporter
-Export polished, client-ready code audit reports complete with visual summary cards, health status indicators, finding tables, and remediation roadmaps directly to PDF.
+### 6. RAG Conversational Security Assistant
+Chat with an offline AI assistant trained on 10 OWASP standard documents and 5 secure coding sheets (306 indexed vector chunks in ChromaDB). Features Markdown code syntax highlighting, 1-click copy buttons, and exact source citations.
 
 ---
 
@@ -144,30 +148,33 @@ Secoria/
 │   │   │   ├── orchestration.py    # Single file & multi-file ZIP review endpoints
 │   │   │   ├── remediation.py      # 1-click auto-remediation routes
 │   │   │   ├── chat.py             # RAG ChromaDB conversational assistant
-│   │   │   ├── pr_summary.py       # GitHub PR review bot & simulation
-│   │   │   └── report.py           # ReportLab server-side PDF generator
+│   │   │   ├── pr_summary.py       # Pull request review summaries
+│   │   │   ├── report.py           # ReportLab executive PDF & ZIP PDF generator
+│   │   │   └── github_webhook.py   # GitHub PR webhook & diff simulator
 │   │   ├── core/                   # Multi-provider LLM failover & config
 │   │   ├── models/                 # Pydantic schemas & data models
 │   │   ├── orchestrator/           # Async multi-agent dispatcher & health scoring
-│   │   └── services/               # Language detector, syntax validator, ZIP analyzer
+│   │   └── services/               # Syntax validator, ZIP analyzer, GitHub service
 │   ├── scripts/
 │   │   └── test_comprehensive_e2e.py # 10-point automated end-to-end integration test
-│   ├── tests/                      # 86 automated Pytest test suites
+│   ├── tests/                      # 87 automated Pytest test suites (100% passing)
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── CodeEditor.jsx         # Line-numbered syntax highlighter
-│   │   │   ├── FindingsDashboard.jsx  # Categorized finding cards & action buttons
+│   │   │   ├── FindingsDashboard.jsx  # Categorized finding cards & export buttons
 │   │   │   ├── MultiFileExplorer.jsx  # ZIP project explorer & KPI dashboard
 │   │   │   ├── ZipUploadModal.jsx     # Modern ZIP upload modal with preset packs
-│   │   │   ├── GitHubPRModal.jsx      # GitHub PR review bot simulation modal
+│   │   │   ├── GitHubPRModal.jsx      # GitHub PR review bot modal & guide
+│   │   │   ├── ReportExportModal.jsx  # Multi-format report export hub (PDF/HTML/JSON/MD/CSV)
 │   │   │   ├── CodeComparatorModal.jsx# Side-by-side visual diff viewer
+│   │   │   ├── MarkdownMessage.jsx    # Chat markdown syntax highlighter & copy buttons
 │   │   │   ├── ChatSidebar.jsx        # RAG conversational assistant interface
 │   │   │   ├── VisualAnalytics.jsx    # Severity & category breakdown charts
 │   │   │   └── LandingPage.jsx        # Dark glassmorphic hero & navigation
 │   │   ├── services/api.js            # Axios client with centralized error handling
-│   │   ├── index.css                  # Custom dark glassmorphism & neon glow design system
+│   │   ├── index.css                  # Custom dark glassmorphism design system
 │   │   └── App.jsx                    # Root view controller
 │   └── package.json
 ├── knowledge-base/
@@ -189,7 +196,7 @@ Secoria/
 | **Static Code Analysis** | `ast`, `radon`, `javalang` | AST parsing, cyclomatic complexity & syntax verification |
 | **Vector DB & Embeddings** | ChromaDB & `all-MiniLM-L6-v2` | 0-cost local dense vector retrieval (RAG) |
 | **LLM Inference** | Google Gemini, Groq, Ollama | Multi-provider fallback chain (Llama 3.3, Qwen 2.5) |
-| **Report Generation** | ReportLab | Server-side binary PDF generation |
+| **Report Generation** | ReportLab | Server-side binary executive PDF generation |
 | **Frontend Framework** | React 18 + Vite | Modular UI with Hot Module Replacement |
 | **Styling System** | Vanilla CSS + Tailwind CSS | Obsidian dark glassmorphism & responsive layout |
 | **Code Highlighting** | Prism.js & Simple Code Editor | In-browser syntax tokenization |
@@ -234,7 +241,7 @@ python -m venv venv
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
-Backend API will start at **`http://127.0.0.1:8000`** (Interactive Docs: `http://127.0.0.1:8000/docs`).
+Backend API starts at **`http://127.0.0.1:8000`** (Interactive Docs: `http://127.0.0.1:8000/docs`).
 
 ### 3. Start Frontend Dashboard
 ```powershell
@@ -259,9 +266,11 @@ Open **`http://localhost:5173/`** in your browser.
 | `POST` | `/api/remediate` | Remediation recommendation & diff for a single finding |
 | `POST` | `/api/remediate-all`| **1-Click Full Auto-Remediation** (Refactored code + patch changelog) |
 | `POST` | `/api/chat` | RAG Conversational Assistant with ChromaDB citations |
+| `POST` | `/api/pr-summary` | Generates developer-friendly PR review Markdown summaries |
 | `POST` | `/api/github/simulate-pr-review` | Simulates a full GitHub Pull Request automated review |
 | `POST` | `/api/github/webhook` | Receives live GitHub pull_request webhook events |
 | `POST` | `/api/report/pdf` | Compiles and downloads an executive PDF audit report |
+| `POST` | `/api/report/zip-pdf` | Compiles and downloads a multi-file project repository PDF report |
 
 ---
 
@@ -277,12 +286,12 @@ Secoria implements a multi-tier failover mechanism managed by `LLMManager`:
 
 ## 🧪 Testing & Quality Assurance
 
-Secoria includes extensive automated test suites covering unit logic, multi-agent orchestration, ZIP parsing, and live endpoint flows:
+Secoria includes automated test suites covering unit logic, multi-agent orchestration, ZIP parsing, and live endpoint flows:
 
 ```powershell
 cd backend
-# Run full Pytest test suite (86 tests)
-.\venv\Scripts\python.exe -m pytest
+# Run full Pytest test suite (87 tests, 100% passing)
+.\venv\Scripts\python.exe -m pytest -v
 
 # Run complete 10-point End-to-End integration verification
 .\venv\Scripts\python.exe scripts/test_comprehensive_e2e.py
