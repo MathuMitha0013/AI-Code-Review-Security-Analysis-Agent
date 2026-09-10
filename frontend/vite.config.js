@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     port: 5173, // must match backend/app/core/config.py BACKEND_CORS_ORIGINS
     watch: {
-      ignored: ['**/*.mp4', '**/*.webm', '**/*.avi', '**/*.mov', '**/*.zip', '**/node_modules/**'],
+      ignored: ['**/node_modules/**', '**/.git/**'],
     },
   },
 })
