@@ -1,6 +1,7 @@
 # Secoria 🛡️
 
 **AI-Powered Code Review & Multi-File Security Analysis Platform**  
+*Infosys Springboard Internship Project*  
 *Enterprise Multi-Agent Static Analysis, OWASP Top 10 Vulnerability Detection, 1-Click Auto-Remediation & Executive Audit Reporting for Python & Java*
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
@@ -11,12 +12,42 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-87%20Passing%20(100%25)-brightgreen?style=for-the-badge)](backend/tests/)
 
+> **Project Status:** ✅ **Infosys Springboard Internship Project** — Milestone 1, 2, 3 & 4 Completed (87/87 Automated Tests Passing)
+
+---
+
+## 🏆 Milestone Progress
+
+- [x] **Milestone 1 — Foundations** ✅
+  - Clean layered architecture designed (`api/`, `services/`, `models/`, `agents/`, `core/`).
+  - Code Submission Module (paste/upload Python & Java, heuristics, AST syntax validation).
+  - Secure Coding Knowledge Base — 306 chunks indexed in ChromaDB (10 OWASP PDFs + 5 markdown reference sheets).
+- [x] **Milestone 2 — Multi-Agent Orchestration & Static Analysis Pipeline** ✅
+  - Code Analysis Agent (code smells, McCabe complexity, deep nesting, God Object detection).
+  - Security Vulnerability Agent (OWASP Top 10 rules with line-specific code snippets).
+  - Multi-Agent Orchestrator (`asyncio.gather` concurrent dispatch, deduplication, severity sorting via `/api/review`).
+  - External tool integration (Bandit, Semgrep, Pylint, Flake8) running in isolated environments.
+- [x] **Milestone 3 — Agent Report Generation, Chat & Remediation** ✅
+  - Remediation Agent (Groq LLM + deterministic regex/AST fallback guarantee).
+  - Code Health Score mathematical formula (100 baseline minus weighted severity deductions).
+  - Conversational Code Assistant (RAG Chatbot grounded in ChromaDB vector store).
+  - PR Summary Agent (structured PR markdown review comments).
+- [x] **Milestone 4 — Final Delivery & Advanced Enterprise Capabilities** ✅
+  - **1-Click Full-Code Auto-Remediation** with interactive side-by-side **Code Comparator Diff Modal**.
+  - **Multi-File ZIP Project Scanner & Repository Explorer** for entire project archives.
+  - **Multi-Format Report Export Hub** (Executive 2-pass PDF with SLA matrix, HTML, JSON, Markdown, CSV).
+  - **GitHub PR Review Bot** parsing unified git diffs with merge gate verdicts.
+  - **87/87 automated backend unit & integration tests passing (100%)**.
+
+---
+
 Secoria is an intelligent, multi-agent cybersecurity platform that automates source code reviews for quality defects, cyclomatic/cognitive complexity, and OWASP Top 10 security vulnerabilities. It combines abstract syntax tree (AST) static analysis with multi-tier Large Language Model (LLM) agents and an offline Retrieval-Augmented Generation (RAG) vector database to deliver instant code audits, 1-click refactoring diffs, interactive multi-file project analysis, executive PDF reports with SLA resolution matrices, and automated GitHub Pull Request reviews.
 
 ---
 
 ## 📑 Table of Contents
 
+- [Milestone Progress](#-milestone-progress)
 - [Key Capabilities](#-key-capabilities)
 - [Multi-Agent Architecture](#-multi-agent-architecture)
 - [Interactive Features & Components](#-interactive-features--components)
